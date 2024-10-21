@@ -1,0 +1,48 @@
+\usepackage{mdframed}
+
+\newmdenv[
+  topline=false,
+  bottomline=false,
+  skipabove=\topsep,
+  skipbelow=\topsep
+]{siderules}
+
+\newcounter{exrc}
+
+\newcommand{\exstep}{%
+    \stepcounter{exrc}%
+    \tikz[baseline]\node[anchor=base,%
+        rectangle split,
+        rectangle split parts=2,
+        draw=black,
+        thick,
+        rectangle split horizontal,
+        rectangle split part fill={black,white},
+        inner sep=3pt] (exx) at (0,0)
+        {\textcolor{white}{\bfseries \extype}\nodepart{two}\theexrc};
+}
+
+\newenvironment{exci}[2][Exercise]{%
+    \begin{siderules}
+    \def\extype{#1}%
+    \leavevmode\exstep\par
+    \smallskip
+    #2
+    \begin{enumerate}[leftmargin=*,noitemsep,nosep]
+}{%
+    \end{enumerate}
+    \end{siderules}
+    \bigskip
+    \def\extype{Exercise}%
+}
+
+\newenvironment{exct}[1][Exercise]{%
+    \begin{siderules}
+    \def\extype{#1}%
+    \leavevmode\exstep\par
+    \smallskip
+    }{%
+        \end{siderules}
+        \bigskip
+        \def\extype{Exercise}%
+}

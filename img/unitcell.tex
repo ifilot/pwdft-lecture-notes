@@ -1,0 +1,16 @@
+\begin{tikzpicture}
+
+% Draw cube
+\draw[dashed, color=gray] (0,0,0) -- (3,0,0) -- (3,3,0) -- (0,3,0) -- cycle; % front face
+\draw[dashed, color=gray] (0,0,3) -- (3,0,3) -- (3,3,3) -- (0,3,3) -- cycle; % back face
+\draw[dashed, color=gray] (0,0,0) -- (0,0,3); % connecting lines
+\draw[dashed, color=gray] (3,0,0) -- (3,0,3);
+\draw[dashed, color=gray] (3,3,0) -- (3,3,3);
+\draw[dashed, color=gray] (0,3,0) -- (0,3,3);
+
+% Label axes
+\draw[thick,->] (0,0,0) -- (3,0,0) node[anchor=west] {$\vec{a}_{2}$}; 
+\draw[thick,->] (0,0,0) -- (0,3,0) node[anchor=south] {$\vec{a}_{3}$}; 
+\draw[thick,->] (0,0,0) -- (0,0,3) node[anchor=north east] {$\vec{a}_{1}$}; 
+
+\end{tikzpicture}

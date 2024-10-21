@@ -1,0 +1,34 @@
+\documentclass[9pt]{extarticle}
+
+\usepackage[sorting=none]{biblatex}
+\addbibresource{references.bib}
+
+\include{config/config}
+
+\title{Plane Wave Density Functional Theory from Scratch}
+\author{Ivo A.W. Filot}
+\date{November 2024}
+
+\begin{document}
+
+\maketitle
+
+\pagestyle{fancy}
+\rfoot{\tiny Compiled on: \DTMnow}
+\cfoot{}
+\cfoot{\thepage}
+
+\begin{multicols*}{2}
+    \tableofcontents
+
+    \input{sections/01_introduction}
+    \input{sections/02_planewaves}
+    \input{sections/03_potentials}
+    \input{sections/04_ewald_summation}
+    \input{sections/05_self_consistent_field}
+    \input{sections/06_further_reading}
+
+    \printbibliography
+
+\end{multicols*}
+\end{document}

@@ -1,0 +1,53 @@
+\usepackage[a4paper,
+            bindingoffset=0.2in,
+            left=.5in,
+            right=.5in,
+            top=1in,
+            bottom=1in,
+            footskip=.5in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{tgadventor}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{multicol,caption}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{braket}
+\usepackage{fancyhdr}
+\usepackage{datetime2}
+\captionsetup{labelfont={bf}}
+\captionsetup{textfont={it}}
+
+% create special Figure environment
+\newenvironment{Figure}
+  {\par\medskip\noindent\minipage{\linewidth}}
+  {\endminipage\par\medskip}
+
+% set spacing between columns
+\setlength{\columnsep}{2.5pc}
+
+% set specific label names
+\crefname{equation}{Equation}{Equations}
+\crefname{figure}{Figure}{Figures}
+\crefname{table}{Table}{Tables}
+
+\include{config/exercise}
+
+% additional math functions
+\newcommand{\mat}[1]{\mathbf{#1}}
+
+\DeclareMathOperator\erf{erf}
+\DeclareMathOperator\erfc{erfc}
+\DeclareMathOperator\sgn{sgn}
+
+\usepackage{mathtools, nccmath}
+\DeclarePairedDelimiter{\nint}\lfloor\rceil
+
+\newcommand{\fft}{\hat{\mathcal{F}}}
+\newcommand{\fftpw}{\hat{\mathcal{F}}_{\text{pw}}}
+\newcommand{\ifft}{\hat{\mathcal{F}}^{-1}}
+\newcommand{\ifftpw}{\hat{\mathcal{F}}_{\text{pw}}^{-1}}
+
+\usepackage{tikz}
+\usetikzlibrary{calc, shapes.multipart, shapes.geometric, arrows}
