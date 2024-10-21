@@ -51,7 +51,7 @@ jobs:
           sudo apt update && sudo apt install poppler-utils
           pdftoppm -jpeg -r 150 -f 1 -l 1 main.pdf pwdft-filot
           mv -v pwdft-filot-01.jpg pwdft-filot-frontpage.jpg
-      - name: Upload PDF file
+      - name: Upload IMG file
         uses: actions/upload-artifact@v4
         with:
           name: IMG
