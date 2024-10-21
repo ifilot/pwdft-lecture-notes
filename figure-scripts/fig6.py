@@ -4,6 +4,12 @@ import scipy as sc
 from pyqint import HF,Molecule,PyQInt,cgf
 import sys, os
 import tqdm
+import pickle
+
+#
+# Figure 6
+# Electrostatics
+#
 
 # add a reference to load the PyPWDFT module
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -12,6 +18,10 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from pypwdft import PeriodicSystem
 
 def main():
+
+    # plotcolors
+    lc = '#00b9f2'  # line color
+    ac = 'black'    # color for analytical line
     
     highest = 512
     nptss = np.logspace(3,
@@ -22,35 +32,49 @@ def main():
     print(nptss)
     a0s = [10,20,50,100]                    # edge sizes of cubic unit cell
     
-    enucs = np.zeros((len(a0s), len(nptss))) # data container
-    ereps = np.zeros((len(a0s), len(nptss))) # data container
-    for i,s in enumerate(tqdm.tqdm(a0s)):
-        v = []
-        for j,npts in enumerate(nptss):
-            
-            npts = int(npts)
-            
-            # generate wave function
-            r, kvec, k2 = build_lattice_points(s, npts)
-            
-            print(s,npts,np.max(k2)/2 * 27.2114)
-            
-            R = np.array([s/2,s/2,s/2])
-            rRv =  r - R
-            Rr2 = np.einsum('ijkl,ijkl->ijk', rRv, rRv)
-            wf = (0.5 * np.pi)**(-3/4) * np.exp(-Rr2)
-            
-            # calculate Hartree and nuclear attraction potentials
-            hartree = calculate_electronic_repulsion(wf * wf, npts, s)
-            vnuc = calculate_nuclear_attraction(npts, s)
-            
-            # calculate energetic terms
-            erep = (np.sum(wf * wf * hartree) * (s/npts)**3).real
-            enuc = (np.sum(wf * wf * vnuc) * (s/npts)**3).real
-            
-            # store
-            enucs[i,j] = enuc
-            ereps[i,j] = erep
+    # enable caching
+    if not os.path.exists('fig6.pickle'):
+        enucs = np.zeros((len(a0s), len(nptss))) # data container
+        ereps = np.zeros((len(a0s), len(nptss))) # data container
+        for i,s in enumerate(tqdm.tqdm(a0s)):
+            v = []
+            for j,npts in enumerate(nptss):
+                
+                npts = int(npts)
+                
+                # generate wave function
+                r, kvec, k2 = build_lattice_points(s, npts)
+                
+                print(s,npts,np.max(k2)/2 * 27.2114)
+                
+                R = np.array([s/2,s/2,s/2])
+                rRv =  r - R
+                Rr2 = np.einsum('ijkl,ijkl->ijk', rRv, rRv)
+                wf = (0.5 * np.pi)**(-3/4) * np.exp(-Rr2)
+                
+                # calculate Hartree and nuclear attraction potentials
+                hartree = calculate_electronic_repulsion(wf * wf, npts, s)
+                vnuc = calculate_nuclear_attraction(npts, s)
+                
+                # calculate energetic terms
+                erep = (np.sum(wf * wf * hartree) * (s/npts)**3).real
+                enuc = (np.sum(wf * wf * vnuc) * (s/npts)**3).real
+                
+                # store
+                enucs[i,j] = enuc
+                ereps[i,j] = erep
+        
+        data = {}
+        data['enucs'] = enucs
+        data['ereps'] = ereps
+        with open('fig6.pickle', 'wb') as f:
+            pickle.dump(data, f)
+    else:
+        with open('fig6.pickle', 'rb') as f:
+            data = pickle.load(f)
+    
+    enucs = data['enucs']
+    ereps = data['ereps']
     
     # build graph
     markers = ['x', 'v', '^', 'o', '*']
@@ -58,37 +82,15 @@ def main():
 
     for i,(s,m) in enumerate(zip(a0s, markers)):
         ax[0].plot(nptss, ereps[i,:], linestyle='--', label=r'$a_{0} = %.1f$ a.u.' % s,
-                marker=m, color='#222222', markersize=5, linewidth=1)
+                marker=m, color=lc, markersize=5, linewidth=1)
         ax[1].plot(nptss, enucs[i,:], linestyle='--', label=r'$a_{0} = %.1f$ a.u.' % s,
-                marker=m, color='#222222', markersize=5, linewidth=1)
+                marker=m, color=lc, markersize=5, linewidth=1)
         ax[2].plot(nptss, (ereps + enucs)[i,:], linestyle='--', label=r'$a_{0} = %.1f$ a.u.' % s,
-                marker=m, color='#222222', markersize=5, linewidth=1)
+                marker=m, color=lc, markersize=5, linewidth=1)
     
-    ax[0].hlines(2/np.sqrt(np.pi), 1, 1000, linewidth=1, color='black', linestyle='solid')
-    ax[1].hlines(-2 * np.sqrt(2/np.pi), 1, 1000, linewidth=1, color='black', linestyle='solid')
-    ax[2].hlines(2/np.sqrt(np.pi) + -2 * np.sqrt(2/np.pi), 1, 1000, linewidth=1, color='black', linestyle='solid')
-    
-    # add arrow
-    ax[0].arrow(6, 2/np.sqrt(np.pi) + 2, 
-                0, -2,
-                length_includes_head=True,
-                head_width=0.5, 
-                head_length=0.5,
-                color='black')
-    
-    ax[1].arrow(6, -2 * np.sqrt(2/np.pi) - 2, 
-                0, 2,
-                length_includes_head=True,
-                head_width=0.5, 
-                head_length=0.5,
-                color='black')
-    
-    ax[2].arrow(6, 2/np.sqrt(np.pi) + -2 * np.sqrt(2/np.pi) + 1.5, 
-                0, -1.5,
-                length_includes_head=True,
-                head_width=0.5, 
-                head_length=0.5,
-                color='black')
+    ax[0].hlines(2/np.sqrt(np.pi), 1, 1000, linewidth=1, color=ac, linestyle='dashed')
+    ax[1].hlines(-2 * np.sqrt(2/np.pi), 1, 1000, linewidth=1, color=ac, linestyle='dashed')
+    ax[2].hlines(2/np.sqrt(np.pi) + -2 * np.sqrt(2/np.pi), 1, 1000, linewidth=1, color=ac, linestyle='dashed')
     
     for i in range(0,3):
         ax[i].grid(linestyle='--')
@@ -108,7 +110,7 @@ def main():
         
     plt.tight_layout()
     
-    plt.savefig('hartree.pdf')
+    plt.savefig('fig6_electrostatics.pdf')
 
 def calculate_electronic_repulsion(edens, npts, sz):
     """
