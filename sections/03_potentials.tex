@@ -124,14 +124,12 @@ For a single hydrogen atom, \cref{eq:nucpotpw} reduces to
 
 \begin{equation}
     \nu_{\text{ext}} = -\frac{4 \pi}{\sqrt{\Omega}} \mathcal{F}_{\text{pw}}^{-1} \left[ \sum_{\vec{G} \neq \vec{0}} |\vec{G}|^{-2} \exp \left(i \vec{G} \cdot \vec{R} \right) \right]
-    \label{eq:nucpotpw}
 \end{equation}
 
 and we can approximate $E_{\text{pot}}$ by means of the following numerical integration
 
 \begin{equation}
     E_{\text{pot}} = \frac{\Omega}{N} \sum_{i}^{N} \nu_{\text{ext}}(\vec{r}_{i}) |\psi_{1s}(\vec{r}_{i})|^{2}.
-    \label{eq:nucpotpw}
 \end{equation}
 
 where $N$ represents the number of sampling points and $\frac{\Omega}{N}$ is the volume corresponding to such a sampling point.
