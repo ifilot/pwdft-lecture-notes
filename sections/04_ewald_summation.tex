@@ -64,7 +64,8 @@ and wherein the value of $\alpha$ is chosen such that the Gaussian effectively s
 The Fourier transform of the charge density shown in \cref{eq:ewald_charge_dens} can be found by solving
 
 \begin{align}
-    \rho_{c}(\vec{G}) &= \frac{1}{\sqrt{\Omega}}\int_{\Omega} d\vec{r} \; \exp\left(-i\vec{G} \cdot \vec{r} \right) \sum_{j} q_{j} \left( \frac{\alpha}{\pi} \right)^{3/2} \exp \left(- \alpha \left|\vec{r} - \vec{R}_{j} \right|^{2} \right) \\
+    \rho_{c}(\vec{G}) &= \frac{1}{\sqrt{\Omega}}\int_{\Omega} d\vec{r} \; \exp\left(-i\vec{G} \cdot \vec{r} \right) \sum_{j} q_{j} \left( \frac{\alpha}{\pi} \right)^{3/2} \cdots \nonumber \\
+    & \cdots \times \exp \left(- \alpha \left|\vec{r} - \vec{R}_{j} \right|^{2} \right) \\
     &= \frac{1}{\sqrt{\Omega}} \sum_{j} q_{j} \exp \left(-i \vec{G} \cdot \vec{R}_{j} \right) \exp \left(- \frac{|\vec{G}|^{2}}{4 \alpha} \right)
 \end{align}
 
