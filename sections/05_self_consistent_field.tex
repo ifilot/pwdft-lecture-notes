@@ -130,6 +130,7 @@ Observe that the operation in \cref{eq:psi_transform} always keeps the magnitude
 
 \begin{equation}
     \max_\varphi \left(\sum_{i}\mathbb{R}\left[ \psi(\vec{r}_{i}) \cdot \exp \left(i \varphi \right)\right]^{2} \right).
+    \label{eq:optimize_real}
 \end{equation}
 
 This is non-linear optimization problem and an efficient way to tackle this is to use the \texttt{differential\_evolution} method of Scipy.\cite{differential_evolution}
@@ -137,3 +138,43 @@ This is non-linear optimization problem and an efficient way to tackle this is t
 To address a suboptimal sampling size, upsampling techniques can be used. Perhaps the most elegant upsampling technique is one that makes use of the Fast Fourier Transform. Consider a Kohn-Sham state $\psi(\vec{r})_{[32]}$ as defined on a grid in real-space using 32 points per Cartesian direction. In reciprocal-space, the same wave function is represented by $\tilde{\psi}(\vec{G})_{[32]}$. To upsample the real-space grid, we first add to $\tilde{\psi}(\vec{G})_{[32]}$ additional plane wave vectors $\vec{G}\prime$, all with $\tilde{\psi}(\vec{G}\prime) = 0$. This process is sometimes called ``padding''. For this strategy to work, the new number of sampling points per Cartesian direction must be an integer multiple of the old number of sampling points. For example, we can choose to upsample the original molecular orbital by a factor of 4, yielding $\tilde{\psi}(\vec{G})_{[128]}$ in reciprocal-space.
 
 Next, the coefficients $\tilde{\psi}(\vec{G})_{[128]}$ can be cast back to real-space using the inverse Fourier transform. Importantly, we have to be cautious about the fact that we have changed the number of sampling. \cref{eq:fft_pw_inverse} remains valid, but the constant $C_{t}$ has changed and we have to use adjust \cref{eq:ct} such that $N_{x},N_{y},N_{z}$ correspond to the new values. To put this in other words, if we have upsampled by a factor of 4, the constant $C_{t}$ decreases by a factor of $4^{3}=64$.
+
+%
+%
+%
+\subsubsection{Demonstration for BH$_{3}$}
+
+To demonstrate the principle of ``phase-rotation'' for visualization purposes, consider the \ce{BH3} molecule calculated in a $10 \times 10 \times 10$ \AA\; unit cell using 32 sampling points per Cartesian direction. The calculation is performed using the \texttt{PyPWDFT}\cite{pypwdft} program. In this demonstration, we will focus on the double-degenerate set of orbitals with $E$-symmetry, i.e. the third and fourth occupied molecular orbitals. In \cref{fig:bh3_before}, the electron density of $\psi_{3}$ and $\psi_{4}$ is sampled in the plane in which the \ce{BH3} molecule resides. Apparently, the calculation converges such that $\psi_{3}$ has a negligible imaginary component. Interestingly, the $\psi_{4}$ molecular orbital is smeared out over both real and imaginary domains. 
+
+We now proceed to apply \cref{eq:optimize_real} to the two molecular orbitals with the aim of optimizing the real component of these orbitals by multiplication of a phase-factor $\exp \left(i \varphi \right)$. In \cref{tab:phase-rotation}, the total electron density for $\psi_{3}$ and $\psi_{4}$, prior and after this ``phase-rotation'', are provided. From this Table, it is clear that $\psi_{3}$ already has - within numerical approximation - all its electron density already in the real domain. In contrast, for $\psi_{4}$ only $\pm$73\% of its electron density resides in the real domain, the other $\pm$27\% in the imaginary domain.
+
+By performing a ``phase-rotation'' using an angle of $\pm$31$^{o}$, the imaginary part is rotated to the real domain, yielding a fully real-space molecular orbital. This is further reflected in \cref{fig:bh3_after}, where it can be seen that there are no more features found corresponding to the imaginary part.
+
+\begin{Figure}
+    \centering
+    \includegraphics[width=\linewidth]{img/fig9.pdf}
+    \captionof{figure}{Heat maps of the third and fourth occupied molecular orbital, i.e. the $E$-double-degenerate set, of the \ce{BH3} molecule. Top row corresponds to the real domain, bottom row to the imaginary domain. Note that $\psi_{4}$ has a non-negligible imaginary component.}
+    \label{fig:bh3_before}
+\end{Figure}
+
+\begin{Table}
+    \captionof{table}{Total amount of electron density, before and after a ``phase-rotation'' of $\varphi$, in the real domain for molecular orbitals $\psi_{3}$ and $\psi_{4}$ of the \ce{BH3} molecule. The value listed for $\varphi$ is the optimal angle (in degrees) that maximizes the real domain component.}
+    \label{tab:phase-rotation}
+    \centering
+    \begin{tabular}{|c|r|r|r|}
+        \hline
+        Orbital & \(\varphi\) (deg) & \(\int_{\Omega} \mathbb{R}[|\psi|^{2}] d\vec{r}\) & \(\int_{\Omega} \mathbb{R}[|\psi \cdot \exp(i \varphi)|^{2}] d\vec{r}\) \\
+        \hline
+        $\psi_{3}$ & \texttt{0.0000} & \texttt{1.0000} & \texttt{1.0000} \\
+        \hline
+        $\psi_{4}$ & \texttt{31.1685} & \texttt{0.7321} & \texttt{1.0000} \\
+        \hline
+    \end{tabular}    
+\end{Table}
+
+\begin{Figure}
+    \centering
+    \includegraphics[width=\linewidth]{img/fig10.pdf}
+    \captionof{figure}{Heat maps of the third and fourth occupied molecular orbital, i.e. the $E$-double-degenerate set, of the \ce{BH3} molecule after phase rotation. Top row corresponds to the real domain, bottom row to the imaginary domain. Note that the imaginary part of $\psi_{4}$ has become negligble.}
+    \label{fig:bh3_after}
+\end{Figure}
