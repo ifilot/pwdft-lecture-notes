@@ -1,7 +1,7 @@
 \section{Ewald summation}
 \label{chap:ewald}
 
-Within the Born-Oppenheimer approximation, the movement of the nuclei and the electrons is decoupled. This means that we can readily evaluate the electrostatic energy due to repelling nuclei via
+Within the Born-Oppenheimer approximation, the movement of the nuclei and the electrons is decoupled.\cite{1927:born} This means that we can readily evaluate the electrostatic energy due to repelling nuclei via
 
 \begin{equation}
     E_{\text{nuc-nuc}} = \frac{1}{2}\sum_{i}q_{i}\sum_{j \neq i,\vec{n}} \frac{q_{j}}{r_{ij} + \vec{n}},
@@ -17,7 +17,7 @@ As seen earlier in the derivation of $\nu_{\text{ext}}$, the charge density due 
     \label{eq:enucnuc_realspace}
 \end{equation}
 
-Of course, this strategy does not circumvent the initial problem that the Coulombic potential is slowly decaying. To tackle this, we use a so-called Ewald summation wherein we introduce on top of the set of point charges a \textit{screening} diffuse charge cloud of opposite sign. For this \textit{screened} set of charges, its contribution to the potential $\nu$ is determined by the amount of charge that is unscreened, whose contribution will (very) rapidly decay with increasing distance. Of course, the introduction of the \textit{screening} charges adds a spurious contribution to the electrostatic potential, which must be compensated. This can be easily done by adding to the electrostatic potential a contribution of a compensating smoothly varying charge distribution, exactly opposite to the \textit{screening} charges. This is shown schematically in \cref{fig:ewald_schematic}.
+Of course, this strategy does not circumvent the initial problem that the Coulombic potential is slowly decaying. To tackle this, we use a so-called Ewald summation wherein we introduce on top of the set of point charges a \textit{screening} diffuse charge cloud of opposite sign.\cite{1921:ewald} For this \textit{screened} set of charges, its contribution to the potential $\nu$ is determined by the amount of charge that is unscreened, whose contribution will (very) rapidly decay with increasing distance. Of course, the introduction of the \textit{screening} charges adds a spurious contribution to the electrostatic potential, which must be compensated. This can be easily done by adding to the electrostatic potential a contribution of a compensating smoothly varying charge distribution, exactly opposite to the \textit{screening} charges. This is shown schematically in \cref{fig:ewald_schematic}.
 
 \begin{Figure}
     \centering
@@ -161,14 +161,16 @@ In the above derivation, we removed the divergent $\vec{G}=\vec{0}$ term in the 
 The electroneutrality term ($E_{\text{en}}$) can be readily evaluated in real-space by calculating the interaction of the \textit{screened} charges with a uniform background charge as given by
 
 \begin{equation}
-    \rho_{\text{bg}} = \frac{\sum_{i}q_{i}}{\Omega}.
+    \rho_{\text{bg}} = \frac{1}{\Omega}\sum_{i} q_{i}.
 \end{equation}
 
 giving the following result
 
 \begin{align}
     E_{\text{en}} &= \frac{1}{2} \int_{\Omega} d\vec{r} \; \rho_{\text{bg}} \nu_{\text{sr}} \\
-    &= \frac{\sum_{i,j}q_{i}q_{j}}{\Omega} \int_{\Omega} d\vec{r} \; \frac{1}{r} \erfc \left( \sqrt{\alpha} r \right) \\
+    &= \frac{1}{\Omega} \int_{\Omega} \sum_{i}q_{i} \sum_{j} \frac{q_{j}}{r} \erfc \left( \sqrt{\alpha} r \right) d\vec{r} \\
+    &= \frac{4 \pi}{2\Omega} \left(\sum_{i}q_{i}\right) \left(\sum_{j}q_{j}\right) \int_{0}^{\infty} r \erfc \left( \sqrt{\alpha} r \right) dr \\
+    &= \frac{4 \pi}{2\Omega} \left(\sum_{i}q_{i}\right)^{2} \frac{1}{4\alpha} \\
     &= \frac{\pi}{2 \alpha \Omega} \left(\sum_{i} q_{i} \right)^{2}
     \label{eq:ewald_en}
 \end{align}
@@ -185,7 +187,7 @@ Having all terms established, the Ewald energy is essentially the sum of the sho
 \subsection{Establishing Ewald sum parameters}
 \label{sec:est_ewald}
 
-The above procedure utilizes the term $\alpha$ to specify the width of the Gaussian and $\vec{n}$ to indicate the number neighboring unit cells considered in the short-range expansion. Furthermore, no cut-off energy is provided for plane waves used in the long-range expansion. Below, a brief recipe is provided to estimate their values.
+The above procedure utilizes the term $\alpha$ to specify the width of the Gaussian and $\vec{n}$ to indicate the number neighboring unit cells considered in the short-range expansion. Furthermore, no cut-off energy is provided for plane waves used in the long-range expansion. Below, a brief recipe is provided to estimate their values.\cite{2002:kustepeli}
 
 First, we introduce the parameter $\gamma$ from which, together with the cut-off energy $E_{\text{cut}}$, the value for $\alpha$ can be derived via
 
