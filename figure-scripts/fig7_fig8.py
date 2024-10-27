@@ -84,8 +84,8 @@ def produce_plot(res, sz, npts, filename):
             cax = divider.append_axes('right', size='5%', pad=0.05)
             fig.colorbar(im[j][i-2], cax=cax, orientation='vertical')
             
-        ax[0,i-2].set_title(r'$\mathbb{R}\;[\psi_{%i}]$' % (i+1))
-        ax[1,i-2].set_title(r'$\mathbb{I}\;[\psi_{%i}]$' % (i+1))
+        ax[0,i-2].set_title(r'$\mathfrak{R}\;[\psi_{%i}]$' % (i+1))
+        ax[1,i-2].set_title(r'$\mathfrak{I}\;[\psi_{%i}]$' % (i+1))
         #ax[2,i].set_title(r'$\rho_{%i}$' % (i+1))
 
     plt.tight_layout()
