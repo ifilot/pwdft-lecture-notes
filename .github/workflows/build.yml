@@ -37,7 +37,8 @@ jobs:
       - name: Set up Git repository
         uses: actions/checkout@v4
       - name: Insert GIT id
-        run: sed -e "s/\\\lfoot{}/\\\lfoot{git id: $GITHUB_SHA}/" main.tex
+        run: |
+          sed -e "s/\\\lfoot{}/\\\lfoot{git id: ${GITHUB_SHA}}/" main.tex
       - name: Compile LaTeX
         uses: xu-cheng/latex-action@v3
         with:
