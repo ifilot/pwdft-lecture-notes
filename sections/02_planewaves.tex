@@ -288,7 +288,7 @@ FFT have a number of relevant properties. Here, I will mention those that are re
     The FFT of a real-valued scalar field produces a symmetric transform. This can be readily understood from the fact that sampling with a plane wave that osscillates in the positive direction yields in principle the same result as one that oscillates in the negative direction, though with its imaginary part inverted. Thus, for a transform
     
     \begin{equation}
-        \tilde{f}(\vec{G}) = \fft\left[f(\vec{r})\right],\;\text{with}\;f(\vec{r}) \in \mathbb{R}^{3}
+        \tilde{f}(\vec{G}) = \fft\left[f(\vec{r})\right],\;\text{with}\;f(\vec{r}): \mathbb{R}^{3} \rightarrow \mathbb{R}
     \end{equation}
     
     we find that
@@ -334,7 +334,7 @@ wherein $\phi(\vec{G})$ corresponds to a single plane wave in line with \cref{eq
 To tie everything together in this section, let us provide a detailed example for the $1s$ atomic orbital of H. Consider a hydrogen atom at position $\vec{R}$ located inside a unitcell with dimensions of $10 \times 10 \times 10$ a.u. The wave function corresponding to the $1s$ atomic orbital, in atomic units, is given by
 
 \begin{equation}
-    \psi_{\text{1s}} = \frac{1}{\sqrt{\pi}} \exp \left( -|\vec{r} - \vec{R}| \right),
+    \psi_{\text{1s}}(\vec{r}) = \frac{1}{\sqrt{\pi}} \exp \left( -|\vec{r} - \vec{R}| \right),
     \label{eq:horb_1s}
 \end{equation}
 
