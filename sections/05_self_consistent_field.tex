@@ -3,7 +3,7 @@
 %
 \section{Self-consistent field procedure}
 
-Central to solving the electronic structure problem using a basis set is finding solutions to the matrix eigenvalue problem, also known as the Roothaan equation
+Central to solving the electronic structure problem using a basis set is finding solutions to the matrix eigenvalue problem, known as the Roothaan equations
 
 \begin{equation}
     \mat{H}\mat{C} = \mat{E}\mat{S}\mat{C}.
@@ -16,9 +16,23 @@ The orthonormality relation among the plane waves simplifies the above expressio
     \label{eq:roothaan}
 \end{equation}
 
-as the overlap matrix $\mat{S}$ becomes the identity matrix. Despite this simplification, solving the above equation remains daunting due to the sheer number of basis functions (plane waves) involved, making these matrices very large. To illustrate this, consider a relatively small basis set size of 10,000 plane waves. Using double precision and noting that the matrix entries are complex-valued, each matrix would allocate a little under 1.5 GiB of memory.
+as the overlap matrix $\mat{S}$ becomes the identity matrix. Despite this simplification, \textit{fully} solving the above equation remains daunting due to the sheer number of basis functions (plane waves) involved. Fully solving \cref{eq:roothaan} corresponds to diagonalizing the matrix $\mat{H}$, an operation that scales with $N_{\text{pw}}^{3}$. 
 
-Consider now the situation that we are basically only interested to find eigenvector and -values for only a relatively small number of Kohn-Sham states $N \ll N_{\textrm{pw}}$ roughly in the order of the number of electrons, i.e. the number of occupied states. In other words, solving \cref{eq:roothaan} in full is a waste of computational resources and would take an unnecessarily long time.
+Assuming without any loss of generality that the Kohn-Sham states are doubly occupied, typically the case for closed-shell systems, the expression for the total electronic energy would be
+
+\begin{equation}
+    E_{\text{total}} = 2\sum_{i}^{N_{\text{elec}}/2} \left< \psi_{i} \left|-\frac{1}{2} \nabla^{2} \right| \psi_{i} \right> + \int_{\Omega} \rho(\vec{r}) \nu(\vec{r}) \; d\vec{r}
+    \label{eq:energy_total_analytical}
+\end{equation}
+
+where the electron density $\rho(\vec{r})$ is given by
+
+\begin{equation}
+    \rho(\vec{r}) = 2\sum_{i}^{N_{\text{elec}}/2} |\psi_{i}(\vec{r})|^{2}.
+    \label{eq:edens_analytical}
+\end{equation}
+
+From \cref{eq:energy_total_analytical,eq:edens_analytical}, it is apparent that we only require the solutions to the first, i.e. lowest in energy, $N_{\text{elec}}$ Kohn-Sham states to obtain all properties of interest. As $N_{\text{elec}}/2 \ll N_{\textrm{pw}}$, fully solving \cref{eq:roothaan} would be a waste of computational resources and would take an unnecessarily long time.
 
 Fortunate for the field of computational chemistry (and many computational fields in general), there exist effective algorithms that allow one to only calculate a few eigenvector and -value pairs in a very large set. Furthermore, one can choose whether to find the lowest or highest eigenvalues in these algorithms. This aspect is important as only those eigenvectors that have the lowest eigenvalues are the most relevant in electronic structure calculations. The specific choice which method to use depends on the matrix properties such as symmetry or sparsity. For electronic structure calculations, the matrix $\mat{H}$ is typically sparse and diagonally dominant, making especially the Arnoldi\cite{1951:arnoldi} and Davidson\cite{1975:davidson} methods very effective. Within this work, we will focus on using the Arnoldi method as it is readily available in Scipy.\cite{arnoldi_scipy}
 
@@ -49,10 +63,10 @@ where $\hat{\mathcal{L}}$ is the Laplacian operator, which when applied to the p
     \label{eq:laplacian_applied}
 \end{equation}
 
-and where $\circ$ corresponds to the the Hadamard\footnote{The Hadamard product is simply the element-wise multiplication of two array-like objects. In \cref{eq:appl_hamil,eq:laplacian_applied}, $\tilde{\psi}(\vec{G})$ is a three-dimensional array of plane-wave coefficients. A Hadamard multiplication on $\tilde{\psi}(\vec{G})$ requires an array-like object of matching dimensions producing another array-like object of the same dimensions.} product operator. $\nu_{\text{eff}}(\vec{r})$ is the effective potential, which is the sum of the external, Hartree en exchange-correlation potentials as given by
+and where $\circ$ corresponds to the the Hadamard\footnote{The Hadamard product is simply the element-wise multiplication of two array-like objects. In \cref{eq:appl_hamil,eq:laplacian_applied}, $\tilde{\psi}(\vec{G})$ is a three-dimensional array of plane-wave coefficients. A Hadamard multiplication on $\tilde{\psi}(\vec{G})$ requires an array-like object of matching dimensions producing another array-like object of the same dimensions.} product operator. $\nu_{\text{eff}}(\vec{r})$ is the effective potential, which is the sum of the external, Hartree and exchange-correlation potentials as given by
 
 \begin{equation}
-    \nu_{\text{eff}}(\vec{r}) = \nu_{\text{ext}}(\vec{r}) + \nu_{U}(\vec{r}) + \nu_{\text{xc}}(\vec{r}).
+    \nu_{\text{eff}}(\vec{r}) = \nu_{\text{ext}}(\vec{r}) + \nu_{u}(\vec{r}) + \nu_{\text{xc}}(\vec{r}).
 \end{equation}
 
 \cref{eq:appl_hamil} is counter-intuitive in the sense that first the plane-wave representation of the wave function $\psi(\vec{G})$ is first transformed to its real-space variant, after which the effective potential is applied to it (in real-space), after which the result is cast back to the plane wave representation. The sole reason for this is that the exchange-correlation functional is determined in real-space and involves a multiplication in real-space. This implies that its evaluation in the plane wave basis would require a very expensive convolution. Despite that it looks more convoluted\footnote{No pun intended.}, the sequence of operations as conducted in \cref{eq:appl_hamil} is computationally more efficient.
@@ -62,7 +76,7 @@ and where $\circ$ corresponds to the the Hadamard\footnote{The Hadamard product 
 %
 \subsection{Electron density mixing}
 
-From the earlier section it was already established that $\nu_{\text{J}}[\rho]$ and $\nu_{\text{xc}}[\rho]$ depend on the electron density $\rho(\vec{r})$ and perhaps a more accurate way to write \cref{eq:roothaan} is
+From the earlier section it was already established that $\nu_{\text{u}}[\rho]$ and $\nu_{\text{xc}}[\rho]$ depend on the electron density $\rho(\vec{r})$ and perhaps a more accurate way to write \cref{eq:roothaan} is
 
 \begin{equation}
     \mat{H}[\rho]\mat{C} = \mat{E}\mat{C},
@@ -82,7 +96,20 @@ by which the electron density in real-space is calculated via
     \label{eq:edens}
 \end{equation}
 
-with $N_{\text{elec}}$ representing the total number of electrons in the system. Note that the specific form of \cref{eq:edens} implies that we assume a closed-shell system by which every molecular orbital (Kohn-Sham state) is doubly-occupied, i.e. hosting two electrons with opposite spin-orientation. It is further assumed that the set $\{ \psi_{j} \}$ is ordered from low to high energy such that the lowest states are occupied in line with the Aufbau principle.
+The objective of the electronic structure optimization method is to tune the coefficients matrix $\mat{C}$ such that the total electronic energy $E_{\text{total}}$ is minimized, whose discretized form is given by
+
+\begin{equation}
+    E_{\text{total}} = 2\sum_{i}^{N_{\text{elec}}/2} \sum_{j}^{N_{\text{pw}}} |C_{ji}|^{2} |\vec{G}_{j}|^{2} + \Delta V \sum_{j}^{N_{\text{pw}}} \nu_{j}(\vec{r}_{j}) \rho(\vec{r}_{j}) + E_{\text{Ewald}}.
+    \label{eq:energy_total_discretized}
+\end{equation}
+
+In \cref{eq:energy_total_discretized}, the total kinetic energy is calculated in reciprocal space via summation over squared expansion coefficients and the squared plane wave vector magnitudes, in line with \cref{eq:kin_en}. The electrostatic and non-classical interaction terms are evaluated in real-space by means of essentially a Riemann sum over a number of sampling points equivalent to the number of plane waves, multiplied with the volume $\Delta V$ associated with each sampling points, being
+
+\begin{equation}
+    \Delta V = \frac{\Omega}{N_{\text{pw}}}.
+\end{equation}
+
+The point of \cref{eq:roothaan_explicit} is to emphasize that an iterative procedure to solve the electronic structure problem is required. The terms in the Hamiltonian $\hat{\mathcal{H}}$ depend on the electron density $\rho(\vec{r})$ which in turn depends on the plane wave expansion coefficients encapsulated in $\mat{C}$ which is the result of solving \cref{eq:roothaan_explicit}. In other words, we encounter the infamous chicken-egg problem. To resolve upon this dilemma, an self-consistent field approach is utilized wherein we start with an initial guess for $\rho(\vec{r})$, solve \cref{eq:roothaan_explicit}, and use the resulting $\mat{C}$ to construct an updated version of $\rho(\vec{r})$, by which we can repeat upon the procedure. We keep on performing these iterations until the electron density, or perhaps more elegantly the total electronic energy, no longer changes. A schematic overview of this procedure is shown in \cref{fig:scf}.
 
 \begin{Figure}
     \centering
@@ -92,8 +119,6 @@ with $N_{\text{elec}}$ representing the total number of electrons in the system.
     \captionof{figure}{Self-consistent field procedure within plane-wave density functional theory.}
     \label{fig:scf}
 \end{Figure}
-
-From \cref{eq:roothaan_explicit}, it becomes apparent that an iterative procedure to solve the electronic structure problem is required. The terms in the Hamiltonian $\hat{\mathcal{H}}$ depend on the electron density $\rho(\vec{r})$ which in turn depends on the plane wave expansion coefficients encapsulated in $\mat{C}$ which is the result of solving \cref{eq:roothaan_explicit}. In other words, we encounter the infamous chicken-egg problem. To resolve upon this dilemma, an self-consistent field approach is utilized wherein we start with an initial guess for $\rho(\vec{r})$, solve \cref{eq:roothaan_explicit}, and use the resulting $\mat{C}$ to construct an updated version of $\rho(\vec{r})$, by which we can repeat upon the procedure. We keep on performing these iterations until the electron density, or perhaps more elegantly the total electronic energy, no longer changes. A schematic overview of this procedure is shown in \cref{fig:scf}.
 
 Besides this outer iterative procedure shown in \cref{fig:scf}, also an inner iterative procedure corresponding to the Arnoldi method is shown. The Arnoldi method itself is also iterative and in every cycle an improved set of eigenvectors is found. The accuracy of these eigenvectors and their associated eigenvalues can be assessed on the basis of the eigenproblem equation
 
@@ -130,13 +155,13 @@ To avoid having to sample both the real and imaginary part of the wave function,
 Observe that the operation in \cref{eq:psi_transform} always keeps the magnitude of the complex number conserved. Thus, its application will not affect the electron density corresponding to $\psi(\vec{r}_{i})$ and allows us to morph the complex scalar field to a real one. For our use case, we wish find the optimal $\varphi$ such that the sum of squares of the real part of the molecular orbital is maximized, i.e.
 
 \begin{equation}
-    \max_\varphi \left(\sum_{i}\mathfrak{R}\left[ \psi(\vec{r}_{i}) \cdot \exp \left(i \varphi \right)\right]^{2} \right).
+    \rho_{\text{real}} = \max_\varphi \left(\sum_{i}\mathfrak{R}\left[ \psi(\vec{r}_{i}) \cdot \exp \left(i \varphi \right)\right]^{2} \right).
     \label{eq:optimize_real}
 \end{equation}
 
-This is non-linear optimization problem and an efficient way to tackle this is to use the \texttt{differential\_evolution} method of Scipy.\cite{differential_evolution}
+This is a non-linear optimization problem and an efficient way to tackle this is to use the \texttt{differential\_evolution} method of Scipy.\cite{differential_evolution}
 
-To address a suboptimal sampling size, upsampling techniques can be used. Perhaps the most elegant upsampling technique is one that makes use of the Fast Fourier Transform. Consider a Kohn-Sham state $\psi(\vec{r})_{[32]}$ as defined on a grid in real-space using 32 points per Cartesian direction. In reciprocal-space, the same wave function is represented by $\tilde{\psi}(\vec{G})_{[32]}$. To upsample the real-space grid, we first add to $\tilde{\psi}(\vec{G})_{[32]}$ additional plane wave vectors $\vec{G}\prime$, all with $\tilde{\psi}(\vec{G}\prime) = 0$. This process is sometimes called ``padding''. For this strategy to work, the new number of sampling points per Cartesian direction must be an integer multiple of the old number of sampling points. For example, we can choose to upsample the original molecular orbital by a factor of 4, yielding $\tilde{\psi}(\vec{G})_{[128]}$ in reciprocal-space.
+To address the potentially suboptimal sampling size, upsampling techniques can be used. Perhaps the most elegant upsampling technique is one that makes use of the Fast Fourier Transform. Consider a Kohn-Sham state $\psi(\vec{r})_{[32]}$ as defined on a grid in real-space using 32 points per Cartesian direction. In reciprocal-space, the same wave function is represented by $\tilde{\psi}(\vec{G})_{[32]}$. To upsample the real-space grid, we first add to $\tilde{\psi}(\vec{G})_{[32]}$ additional plane wave vectors $\vec{G}\prime$, all with $\tilde{\psi}(\vec{G}\prime) = 0$. This process is sometimes called ``padding''. For this strategy to work, the new number of sampling points per Cartesian direction must be an integer multiple of the old number of sampling points. For example, we can choose to upsample the original molecular orbital by a factor of 4, yielding $\tilde{\psi}(\vec{G})_{[128]}$ in reciprocal-space.
 
 Next, the coefficients $\tilde{\psi}(\vec{G})_{[128]}$ can be cast back to real-space using the inverse Fourier transform. Importantly, we have to be cautious about the fact that we have changed the number of sampling. \cref{eq:fft_pw_inverse} remains valid, but the constant $C_{t}$ has changed and we have to use adjust \cref{eq:ct} such that $N_{x},N_{y},N_{z}$ correspond to the new values. To put this in other words, if we have upsampled by a factor of 4, the constant $C_{t}$ decreases by a factor of $4^{3}=64$.
 
@@ -144,6 +169,7 @@ Next, the coefficients $\tilde{\psi}(\vec{G})_{[128]}$ can be cast back to real-
 %
 %
 \subsubsection{Demonstration of phase-rotation for \ce{BH3}}
+
 
 To demonstrate the principle of ``phase-rotation'' for visualization purposes, consider the \ce{BH3} molecule calculated in a $10 \times 10 \times 10$ \AA\; unit cell using 32 sampling points per Cartesian direction. The calculation is performed using the \texttt{PyPWDFT}\cite{pypwdft} program. In this demonstration, we will focus on the double-degenerate set of orbitals with $E$-symmetry, i.e. the third and fourth occupied molecular orbitals. In \cref{fig:bh3_before}, the electron density of $\psi_{3}$ and $\psi_{4}$ is sampled in the plane in which the \ce{BH3} molecule resides. For these settings, the calculation converges such that $\psi_{3}$ has a negligible imaginary component. Interestingly, the $\psi_{4}$ molecular orbital is smeared out over both real and imaginary domains. 
 
@@ -153,6 +179,8 @@ To demonstrate the principle of ``phase-rotation'' for visualization purposes, c
     \captionof{figure}{Heat maps of the third and fourth occupied molecular orbital, i.e. the $E$-double-degenerate set, of the \ce{BH3} molecule. Top row corresponds to the real domain, bottom row to the imaginary domain. Note that $\psi_{4}$ has a non-negligible imaginary component.}
     \label{fig:bh3_before}
 \end{Figure}
+
+We now proceed to apply \cref{eq:optimize_real} to the two molecular orbitals with the aim of optimizing the real component of these orbitals by multiplication of a phase-factor $\exp \left(i \varphi \right)$. In \cref{tab:phase-rotation}, the total electron density for $\psi_{3}$ and $\psi_{4}$, prior and after this ``phase-rotation'', is provided. From this Table, it is clear that $\psi_{3}$ already has - within numerical approximation - all its electron density already in the real domain. In contrast, for $\psi_{4}$ only $\pm$73\% of its electron density resides in the real domain, the other $\pm$27\% in the imaginary domain.
 
 \begin{Table}
     \captionof{table}{Total amount of electron density, before and after a ``phase-rotation'' of $\varphi$, in the real domain for molecular orbitals $\psi_{3}$ and $\psi_{4}$ of the \ce{BH3} molecule. The value listed for $\varphi$ is the optimal angle (in degrees) that maximizes the real domain component.}
@@ -175,7 +203,5 @@ To demonstrate the principle of ``phase-rotation'' for visualization purposes, c
     \captionof{figure}{Heat maps of the third and fourth occupied molecular orbital, i.e. the $E$-double-degenerate set, of the \ce{BH3} molecule after phase rotation. Top row corresponds to the real domain, bottom row to the imaginary domain. Note that the imaginary part of $\psi_{4}$ has become negligble.}
     \label{fig:bh3_after}
 \end{Figure}
-
-We now proceed to apply \cref{eq:optimize_real} to the two molecular orbitals with the aim of optimizing the real component of these orbitals by multiplication of a phase-factor $\exp \left(i \varphi \right)$. In \cref{tab:phase-rotation}, the total electron density for $\psi_{3}$ and $\psi_{4}$, prior and after this ``phase-rotation'', is provided. From this Table, it is clear that $\psi_{3}$ already has - within numerical approximation - all its electron density already in the real domain. In contrast, for $\psi_{4}$ only $\pm$73\% of its electron density resides in the real domain, the other $\pm$27\% in the imaginary domain.
 
 By performing a ``phase-rotation'' using an angle of $\pm$31\textdegree, the imaginary part is rotated to the real domain, yielding a fully real-space molecular orbital. This is further reflected in \cref{fig:bh3_after}, where it can be seen that there are no more features found corresponding to the imaginary part.

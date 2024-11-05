@@ -200,14 +200,14 @@ Although \cref{eq:pwcoeff-int} provides a straightforward recipe to find the $\t
 
 The FFT algorithm is provided in many software packages for a diverse array of programming languages and environments. Just for the Python programming language alone, there are already three commonly-used libraries available, corresponding to those implemented in NumPy\cite{numpy} and SciPy\cite{scipy} and one dedicated module PyFFTW. These libraries differ in their ease of use and computational efficiency, yet all perform the FFT using the same underlying mathematical conventions and thus yield the same result. It is relevant to emphasize here that this does not have to be the case and before using any kind of numerical implementation of the FFT, one should critically read its documentation to assess which conventions are in place.
 
-The way that the FFT works is that it takes as input a discretized scalar field, i.e. the values of the function $f_{i} = f(\vec{r_{i}})$ taken at sampling points $\left\{\vec{r}_{i}\right\}$. The output of the FFT corresponds to the values of the expansion coefficients $\tilde{f}(\vec{G_{i}})$ for the set of plane wave vectors $\left\{ \vec{G}_{i} \right\}$. The sets $\left\{\vec{r}_{i}\right\}$ and $\left\{\vec{G}_{i}\right\}$ are related in the sense that they both pertain to an equidistant discretization of their corresponding spaces, i.e. \textbf{real-space} and \textbf{reciprocal-space} representations, and are of the same size and dimensionality. The FFT thus acts as a basis set transformation between basis functions spanning the real-space and another basis set spanning the reciprocal-space, the latter set being the plane waves.
-
 \begin{Figure}
     \centering
     \includegraphics[width=\linewidth]{img/fig2_sampling.pdf}
     \captionof{figure}{Schematic depiction of (left) sampling points in real-space for a cubic unit cell of $1 \times 1 \times 1$ a.u. and (right) the corresponding plane-wave vectors in reciprocal-space. The real-space sampling points are shown for $z=0.5$ and the reciprocal lattice vectors are shown for $G_{z}=0$. The dashed lines indicate the real (left) and reciprocal (right) unit cells.}
     \label{fig:sampling}
 \end{Figure}
+
+The way that the FFT works is that it takes as input a discretized scalar field, i.e. the values of the function $f_{i} = f(\vec{r_{i}})$ taken at sampling points $\left\{\vec{r}_{i}\right\}$. The output of the FFT corresponds to the values of the expansion coefficients $\tilde{f}(\vec{G_{i}})$ for the set of plane wave vectors $\left\{ \vec{G}_{i} \right\}$. The sets $\left\{\vec{r}_{i}\right\}$ and $\left\{\vec{G}_{i}\right\}$ are related in the sense that they both pertain to an equidistant discretization of their corresponding spaces, i.e. \textbf{real-space} and \textbf{reciprocal-space} representations, and are of the same size and dimensionality. The FFT thus acts as a basis set transformation between basis functions spanning the real-space and another basis set spanning the reciprocal-space, the latter set being the plane waves.
 
 In \cref{fig:sampling}, an example is provided for a cubic unit cell with edges of size $a_{0} = 1$ a.u. and $N = 8$ sampling points per Cartesian direction. In the graph on the left hand side, we can see the 64 sampling points that lie in the plane $z=5$. In total, there are 8 such planes in which the values for the function to be transformed are going to be sampled. Application of the FFT will result in the expansion coefficients for the set of plane waves whose reciprocal lattice vectors are shown in the right graph in \cref{fig:sampling}. Observe that with increasing distance from the origin, the $\vec{G}$-vectors corresponds to increasingly stronger oscillating plane waves with increasing kinetic energy.
 
@@ -322,6 +322,7 @@ Building upon the derivation of the kinetic energy of a single plane wave as sho
     &= \frac{1}{2} \sum_{\vec{G}\prime}\sum_{\vec{G}} \tilde{\psi}(\vec{G}) \tilde{\psi}(\vec{G}\prime) |\vec{G}|^{2} \braket{\phi(\vec{G}\prime)|\phi(\vec{G})} \\
     &= \frac{1}{2} \sum_{\vec{G}\prime}\sum_{\vec{G}} \tilde{\psi}(\vec{G}) \tilde{\psi}(\vec{G}\prime) |\vec{G}|^{2} \delta_{G,G\prime} \\
     &=\frac{1}{2}\sum_{\vec{G}} |\tilde{\psi}(\vec{G})|^{2} \cdot |\vec{G}|^{2}
+    \label{eq:kin_en}
 \end{align}
 
 wherein $\phi(\vec{G})$ corresponds to a single plane wave in line with \cref{eq:pwexpr}.
@@ -367,13 +368,13 @@ In what follows, three metrics are being assessed as function of the number of s
     \item The kinetic energy
 \end{enumerate}
 
-The first two metrics should both result in a value of unity, the latter corresponds to the analytical solution of \cref{eq:kinen}. In \cref{fig:ekin_convergence}, the relative error for these three metrics is shown. From this Figure it can be seen that with increasing number of sampling points, the relative error for all three metrics consistently decays.
-
 \begin{Figure}
     \centering
     \includegraphics[width=\linewidth]{img/fig4_ekin_convergence.pdf}
     \captionof{figure}{Convergence of self-overlap and kinetic energy as function of the number of sampling points per Cartesian direction.}
     \label{fig:ekin_convergence}
 \end{Figure}
+
+The first two metrics should both result in a value of unity, the latter corresponds to the analytical solution of \cref{eq:kinen}. In \cref{fig:ekin_convergence}, the relative error for these three metrics is shown. From this Figure it can be seen that with increasing number of sampling points, the relative error for all three metrics consistently decays.
 
 Through both numerical and analytical approaches, key metrics such as the total electron density, the sum of squared plane wave expansion coefficients, and the kinetic energy are evaluated, showing that the numerical results converge to their expected values as the number of sampling points increases. The relative error in all three metrics systematically decreases with finer sampling, confirming the accuracy and reliability of the computational methods used in this analysis. As the number of sampling points relates to the number of planes waves, it follows that the cut-off energy, characterizing the number of plane waves in the basis set, is thus an easy parameter to use to set the accuracy and efficiency of the calculations.
