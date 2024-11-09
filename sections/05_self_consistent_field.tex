@@ -16,9 +16,9 @@ The orthonormality relation among the plane waves simplifies the above expressio
     \label{eq:roothaan}
 \end{equation}
 
-as the overlap matrix $\mat{S}$ becomes the identity matrix. Despite this simplification, \textit{fully} solving the above equation remains daunting due to the sheer number of basis functions (plane waves) involved. Fully solving \cref{eq:roothaan} corresponds to diagonalizing the matrix $\mat{H}$, an operation that scales with $N_{\text{pw}}^{3}$. 
+as the overlap matrix $\mat{S}$ is simply the identity matrix. Despite this simplification, \textit{fully} solving the above equation remains daunting due to the sheer number of basis functions (plane waves) involved. Fully solving \cref{eq:roothaan} corresponds to diagonalizing the matrix $\mat{H}$, an operation that scales with $N_{\text{pw}}^{3}$. 
 
-Assuming without any loss of generality that the Kohn-Sham states are doubly occupied, typically the case for closed-shell systems, the expression for the total electronic energy would be
+Assuming without any loss of generality that the Kohn-Sham states are doubly occupied\footnote{In other words, we assume that our system is spin-unpolarized.}, typically the case for closed-shell systems, the expression for the total electronic energy would be
 
 \begin{equation}
     E_{\text{total}} = 2\sum_{i}^{N_{\text{elec}}/2} \left< \psi_{i} \left|-\frac{1}{2} \nabla^{2} \right| \psi_{i} \right> + \int_{\Omega} \rho(\vec{r}) \nu(\vec{r}) \; d\vec{r}
@@ -32,7 +32,7 @@ where the electron density $\rho(\vec{r})$ is given by
     \label{eq:edens_analytical}
 \end{equation}
 
-From \cref{eq:energy_total_analytical,eq:edens_analytical}, it is apparent that we only require the solutions to the first, i.e. lowest in energy, $N_{\text{elec}}$ Kohn-Sham states to obtain all properties of interest. As $N_{\text{elec}}/2 \ll N_{\textrm{pw}}$, fully solving \cref{eq:roothaan} would be a waste of computational resources and would take an unnecessarily long time.
+From \cref{eq:energy_total_analytical,eq:edens_analytical}, it is apparent that we only require the solutions to the first, i.e. lowest in energy, $N_{\text{elec}}/2$ Kohn-Sham states to obtain all properties of interest. As $N_{\text{elec}}/2 \ll N_{\textrm{pw}}$, fully solving \cref{eq:roothaan} would be a waste of computational resources and would take an unnecessarily long time.
 
 Fortunate for the field of computational chemistry (and many computational fields in general), there exist effective algorithms that allow one to only calculate a few eigenvector and -value pairs in a very large set. Furthermore, one can choose whether to find the lowest or highest eigenvalues in these algorithms. This aspect is important as only those eigenvectors that have the lowest eigenvalues are the most relevant in electronic structure calculations. The specific choice which method to use depends on the matrix properties such as symmetry or sparsity. For electronic structure calculations, the matrix $\mat{H}$ is typically sparse and diagonally dominant, making especially the Arnoldi\cite{1951:arnoldi} and Davidson\cite{1975:davidson} methods very effective. Within this work, we will focus on using the Arnoldi method as it is readily available in Scipy.\cite{arnoldi_scipy}
 
@@ -43,7 +43,7 @@ Fortunate for the field of computational chemistry (and many computational field
 
 Using the Arnoldi method, one can approximate eigenvalues and eigenvectors of large, sparse matrices. The number of required eigenvector/-value pairs can be freely set and the method allows to focus on the lowest eigenvalues, i.e. those that are most relevant for the electronic structure calculation as unoccupied (virtual) Kohn-Sham states have no contributions to the total electronic energy.
 
-Another strong feature of the Arnoldi method is that the Hamiltonian matrix $\mat{H}$ does not have to be explicitly known, only its effect when applied to an arbitrary vector $\vec{c}$ needs to be known, i.e. only a numerical procedure to calculate
+Another strong feature of the Arnoldi method is that the Hamiltonian matrix $\mat{H}$ does not have to be explicitly known, only its effect when applied to an arbitrary vector $\vec{c}$ is required. Specifically, the result of the following equation
 
 \begin{equation}
     \vec{c}\;\prime = \mat{H}\vec{c}
@@ -63,13 +63,13 @@ where $\hat{\mathcal{L}}$ is the Laplacian operator, which when applied to the p
     \label{eq:laplacian_applied}
 \end{equation}
 
-and where $\circ$ corresponds to the the Hadamard\footnote{The Hadamard product is simply the element-wise multiplication of two array-like objects. In \cref{eq:appl_hamil,eq:laplacian_applied}, $\tilde{\psi}(\vec{G})$ is a three-dimensional array of plane-wave coefficients. A Hadamard multiplication on $\tilde{\psi}(\vec{G})$ requires an array-like object of matching dimensions producing another array-like object of the same dimensions.} product operator. $\nu_{\text{eff}}(\vec{r})$ is the effective potential, which is the sum of the external, Hartree and exchange-correlation potentials as given by
+where $\circ$ corresponds to the the Hadamard\footnote{The Hadamard product is simply the element-wise multiplication of two array-like objects. In \cref{eq:appl_hamil,eq:laplacian_applied}, $\tilde{\psi}(\vec{G})$ is a three-dimensional array of plane-wave coefficients. A Hadamard multiplication on $\tilde{\psi}(\vec{G})$ requires an array-like object of matching dimensions producing another array-like object of the same dimensions.} product operator. $\nu_{\text{eff}}(\vec{r})$ is the effective potential, which is the sum of the external, Hartree and exchange-correlation potentials as given by
 
 \begin{equation}
     \nu_{\text{eff}}(\vec{r}) = \nu_{\text{ext}}(\vec{r}) + \nu_{u}(\vec{r}) + \nu_{\text{xc}}(\vec{r}).
 \end{equation}
 
-\cref{eq:appl_hamil} is counter-intuitive in the sense that first the plane-wave representation of the wave function $\psi(\vec{G})$ is first transformed to its real-space variant, after which the effective potential is applied to it (in real-space), after which the result is cast back to the plane wave representation. The sole reason for this is that the exchange-correlation functional is determined in real-space and involves a multiplication in real-space. This implies that its evaluation in the plane wave basis would require a very expensive convolution. Despite that it looks more convoluted\footnote{No pun intended.}, the sequence of operations as conducted in \cref{eq:appl_hamil} is computationally more efficient.
+\cref{eq:appl_hamil} may seem counterintuitive, as it involves first transforming the plane-wave representation of the wave function, $\psi(\vec{G})$, to its real-space form. The effective potential is then applied in real-space, and subsequently, the result is converted back to the plane-wave representation. The sole reason for this is that the exchange-correlation energy is determined in real-space and involves a multiplication in real-space. This implies that its evaluation in the plane wave basis would require a very expensive convolution. Despite that it looks more convoluted\footnote{No pun intended.}, the sequence of operations as conducted in \cref{eq:appl_hamil} is computationally more efficient.
 
 %
 %
@@ -109,7 +109,7 @@ In \cref{eq:energy_total_discretized}, the total kinetic energy is calculated in
     \Delta V = \frac{\Omega}{N_{\text{pw}}}.
 \end{equation}
 
-The point of \cref{eq:roothaan_explicit} is to emphasize that an iterative procedure to solve the electronic structure problem is required. The terms in the Hamiltonian $\hat{\mathcal{H}}$ depend on the electron density $\rho(\vec{r})$ which in turn depends on the plane wave expansion coefficients encapsulated in $\mat{C}$ which is the result of solving \cref{eq:roothaan_explicit}. In other words, we encounter the infamous chicken-egg problem. To resolve upon this dilemma, an self-consistent field approach is utilized wherein we start with an initial guess for $\rho(\vec{r})$, solve \cref{eq:roothaan_explicit}, and use the resulting $\mat{C}$ to construct an updated version of $\rho(\vec{r})$, by which we can repeat upon the procedure. We keep on performing these iterations until the electron density, or perhaps more elegantly the total electronic energy, no longer changes. A schematic overview of this procedure is shown in \cref{fig:scf}.
+The point of \cref{eq:roothaan_explicit} is to emphasize that an iterative procedure to solve the electronic structure problem is required. The terms in the Hamiltonian $\hat{\mathcal{H}}$ depend on the electron density $\rho(\vec{r})$ which in turn depends on the plane wave expansion coefficients encapsulated in $\mat{C}$ which is the result of solving \cref{eq:roothaan_explicit}. In other words, we encounter the infamous ``chicken-egg'' problem. To resolve upon this dilemma, an self-consistent field approach is utilized wherein we start with an initial guess for $\rho(\vec{r})$, solve \cref{eq:roothaan_explicit}, and use the resulting $\mat{C}$ to construct an updated version of $\rho(\vec{r})$, by which we can repeat upon the procedure. We keep on performing these iterations until the electron density, or perhaps more elegantly the total electronic energy, no longer changes. A schematic overview of this procedure is shown in \cref{fig:scf}.
 
 \begin{Figure}
     \centering
@@ -128,7 +128,7 @@ Besides this outer iterative procedure shown in \cref{fig:scf}, also an inner it
 
 and only when the set of $\{ \vec{c} \}$ is compliant to the above equation, the inner loop is converged.
 
-With respect to the outer iterative cycle, we can imagine a chain of electron densities $\rho_{i}$ that becomes with each iteration closer to the self-consistent field solution. To minimize upon the number of iterations required, it is advantageous to seek an optimal procedure to update $\rho$. It turns out that simply replacing the old $\rho$ with the updated one is not the most efficient as it can be result in ``overshooting''. To combat the ``overshooting'', one can slowly add the new $\rho$ to the old $\rho$ via
+With respect to the outer iterative cycle, we can imagine a chain of electron densities $\rho_{i}$ that becomes with each iteration closer to the self-consistent field solution. To minimize upon the number of iterations required, it is advantageous to seek an optimal procedure to update $\rho$. It turns out that simply replacing the old $\rho$ with the updated one is not the most efficient as it can 1result in ``overshooting''. To combat the ``overshooting'', one can slowly add the new $\rho$ to the old $\rho$ via
 
 \begin{equation}
     \rho \leftarrow \alpha \rho_{\text{new}} + (1 - \alpha) \rho_{\text{old}}
@@ -152,7 +152,7 @@ To avoid having to sample both the real and imaginary part of the wave function,
     \label{eq:psi_transform}
 \end{equation}
 
-Observe that the operation in \cref{eq:psi_transform} always keeps the magnitude of the complex number conserved. Thus, its application will not affect the electron density corresponding to $\psi(\vec{r}_{i})$ and allows us to morph the complex scalar field to a real one. For our use case, we wish find the optimal $\varphi$ such that the sum of squares of the real part of the molecular orbital is maximized, i.e.
+Observe that the operation in \cref{eq:psi_transform} always keeps the magnitude of the complex number conserved. Thus, its application will not affect the electron density corresponding to $\psi(\vec{r}_{i})$ and allows us to morph the complex scalar field to a real one. For our use case, we wish to find the optimal $\varphi$ such that the sum of squares of the real part of the molecular orbital is maximized, i.e.
 
 \begin{equation}
     \rho_{\text{real}} = \max_\varphi \left(\sum_{i}\mathfrak{R}\left[ \psi(\vec{r}_{i}) \cdot \exp \left(i \varphi \right)\right]^{2} \right).
@@ -161,7 +161,7 @@ Observe that the operation in \cref{eq:psi_transform} always keeps the magnitude
 
 This is a non-linear optimization problem and an efficient way to tackle this is to use the \texttt{differential\_evolution} method of Scipy.\cite{differential_evolution}
 
-To address the potentially suboptimal sampling size, upsampling techniques can be used. Perhaps the most elegant upsampling technique is one that makes use of the Fast Fourier Transform. Consider a Kohn-Sham state $\psi(\vec{r})_{[32]}$ as defined on a grid in real-space using 32 points per Cartesian direction. In reciprocal-space, the same wave function is represented by $\tilde{\psi}(\vec{G})_{[32]}$. To upsample the real-space grid, we first add to $\tilde{\psi}(\vec{G})_{[32]}$ additional plane wave vectors $\vec{G}\prime$, all with $\tilde{\psi}(\vec{G}\prime) = 0$. This process is sometimes called ``padding''. For this strategy to work, the new number of sampling points per Cartesian direction must be an integer multiple of the old number of sampling points. For example, we can choose to upsample the original molecular orbital by a factor of 4, yielding $\tilde{\psi}(\vec{G})_{[128]}$ in reciprocal-space.
+Another potential problem to address involved the suboptimal sampling size, for which upsampling techniques can be used. Perhaps the most elegant upsampling technique is one that makes use of the Fast Fourier Transform. Consider a Kohn-Sham state $\psi(\vec{r})_{[32]}$ as defined on a grid in real-space using 32 points per Cartesian direction. In reciprocal-space, the same wave function is represented by $\tilde{\psi}(\vec{G})_{[32]}$. To upsample the real-space grid, we first add to $\tilde{\psi}(\vec{G})_{[32]}$ additional plane wave vectors $\vec{G}\prime$, all with $\tilde{\psi}(\vec{G}\prime) = 0$. This process is sometimes called ``padding''. For this strategy to work, the new number of sampling points per Cartesian direction must be an integer multiple of the old number of sampling points. For example, we can choose to upsample the original molecular orbital by a factor of 4, yielding $\tilde{\psi}(\vec{G})_{[128]}$ in reciprocal-space.
 
 Next, the coefficients $\tilde{\psi}(\vec{G})_{[128]}$ can be cast back to real-space using the inverse Fourier transform. Importantly, we have to be cautious about the fact that we have changed the number of sampling. \cref{eq:fft_pw_inverse} remains valid, but the constant $C_{t}$ has changed and we have to use adjust \cref{eq:ct} such that $N_{x},N_{y},N_{z}$ correspond to the new values. To put this in other words, if we have upsampled by a factor of 4, the constant $C_{t}$ decreases by a factor of $4^{3}=64$.
 
