@@ -13,6 +13,7 @@ import pickle
 import os
 import scipy
 from scipy.stats.qmc import LatinHypercube
+from tqdm import tqdm
 
 def main():
     # build atomic system
@@ -42,6 +43,28 @@ def main():
     for i in range(2,4):
         print(calculate_kinetic_energy(res['orbc_fft'][i], sz, npts).real)
     
+    # calculate real component as function of angle
+    angles = np.linspace(-np.pi/2, np.pi/2, 100)
+    r_arr_2 = []
+    r_arr_3 = []
+    deltaV = (1000 / 32**3)
+    for a in tqdm(angles):
+        r_arr_2.append(-real_part_psi(a, res['orbc_rs'][2]) * deltaV)
+        r_arr_3.append(-real_part_psi(a, res['orbc_rs'][3]) * deltaV)
+    plt.figure(dpi=144, figsize=(4,4))
+    plt.plot(np.degrees(angles), r_arr_2, color='#00b9f2', label=r'$\psi_{3}$')
+    plt.plot(np.degrees(angles), r_arr_3, color='#00b9f2', linestyle='dashed', label=r'$\psi_{4}$')
+    plt.legend()
+    plt.ylim(0,1)
+    plt.xlim(-90,90)
+    plt.xlabel("Angle [degrees]")
+    plt.ylabel(r'$\int_{\Omega} \mathfrak{R}\left[\psi \cdot \exp(i \varphi)\right]^{2} d\vec{r}$')
+    plt.grid(linestyle='--', color='black', alpha=0.5)
+    plt.tight_layout()
+    plt.savefig('fig10.pdf')
+    
+    print(31.1, -real_part_psi(np.radians(31.1), res['orbc_rs'][3]) * deltaV)
+    
     # perform transformation
     print('\nPerforming Transformation\n')
     for i in range(2,4):
@@ -58,7 +81,7 @@ def main():
         print(calculate_kinetic_energy(np.fft.fftn(res['orbc_rs'][i]) * Ct, sz, npts).real)
     
     # reproduce plots after transformation
-    produce_plot(res, sz, npts, 'fig10.pdf')
+    #produce_plot(res, sz, npts, 'fig10.pdf')
 
 def produce_plot(res, sz, npts, filename):
     """
@@ -118,12 +141,9 @@ def optimize_real(psi):
     Perform a phase transformation such that the real part of wave function
     is maximized
     """
-    def f(angle, psi):
-        phase = np.exp(1j * angle)
-        return -np.sum((psi * phase).real**2)
-
-    res = scipy.optimize.differential_evolution(f, [(-np.pi,np.pi)], args=(psi,),
-                                  tol=1e-12)
+    res = scipy.optimize.differential_evolution(real_part_psi,
+                                                [(-np.pi/2,np.pi/2)], args=(psi,),
+                                                tol=1e-12)
     
     deltaV = (1000 / 32**3)
     
@@ -133,6 +153,10 @@ def optimize_real(psi):
           np.sum((psi*phase).real**2) * deltaV)
     
     return psi * np.exp(1j * res.x)
+
+def real_part_psi(angle, psi):
+    phase = np.exp(1j * angle)
+    return -np.sum((psi * phase).real**2)
 
 if __name__ == '__main__':
     main()
