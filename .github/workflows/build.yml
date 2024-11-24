@@ -53,7 +53,7 @@ jobs:
         run: |
           sudo apt update && sudo apt install poppler-utils imagemagick
           pdftoppm -jpeg -r 150 main.pdf pwdft-filot
-          montage pwdft-filot-*.jpg -tile x3 -geometry +2+2 pwdft-filot.jpg
+          montage pwdft-filot-*.jpg -tile 3x -geometry +2+2 pwdft-filot.jpg
           convert -resize 1280x pwdft-filot.jpg pwdft-filot-frontpage.jpg
       - name: Upload IMG file
         uses: actions/upload-artifact@v4
