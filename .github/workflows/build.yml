@@ -52,8 +52,8 @@ jobs:
       - name: Produce front page
         run: |
           sudo apt update && sudo apt install poppler-utils imagemagick
-          pdftoppm -jpeg -r 150 -f 1 -l 9 main.pdf pwdft-filot
-          montage pwdft-filot-{01..09}.jpg -tile 3x3 -geometry +2+2 pwdft-filot.jpg
+          pdftoppm -jpeg -r 150 main.pdf pwdft-filot
+          montage pwdft-filot-*.jpg -tile x3 -geometry +2+2 pwdft-filot.jpg
           convert -resize 1280x pwdft-filot.jpg pwdft-filot-frontpage.jpg
       - name: Upload IMG file
         uses: actions/upload-artifact@v4
