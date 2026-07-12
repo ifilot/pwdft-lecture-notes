@@ -14,7 +14,7 @@ In the following, I will provide a mathematical framework to describe both plane
 %
 %
 %
-\subsection{Mathematical framework}
+\subsection{Unit cells and reciprocal lattice vectors}
 
 Consider a periodic unitcell defined by the matrix $\mathbf{M}$ which encapsulates the triplet of vectors spanning the parallelepiped in its row-space as given by
 
@@ -35,20 +35,20 @@ A schematic representation is provided in \cref{fig:unitcell}.
     \resizebox{0.7 \textwidth}{!}{
         \input{img/fig1_unitcell}
     }
-    \captionof{figure}{Schematic depiction of a (cubic) unit cell spanned by the triplet of vectors $\{\vec{a}_{1}, \vec{a}_{1}, \vec{a}_{1}\}$.}
+    \captionof{figure}{Schematic depiction of a (cubic) unit cell spanned by the triplet of vectors $\{\vec{a}_{1}, \vec{a}_{2}, \vec{a}_{3}\}$.}
     \label{fig:unitcell}
 \end{Figure}
 
-The volume of this unit cell ($\Omega$) is given by the absolute value of the determinant of $\mathbf{M}$ or similarly by the triple product of its unit vectors.
+The volume of this unit cell ($\Omega$) is given by the absolute value of the determinant of $\mathbf{M}$ or similarly by the absolute value of the triple product of its lattice vectors.
 
 \begin{equation}
-    \Omega = \det \left| \mathbf{M} \right| = \vec{a_{1}} \cdot \left(\vec{a_{2}} \times \vec{a_{3}} \right)
+    \Omega = \left|\det \left( \mathbf{M} \right)\right| = \left|\vec{a_{1}} \cdot \left(\vec{a_{2}} \times \vec{a_{3}} \right)\right|
 \end{equation}
 
-Any point $\vec{r}$ within this unit cell is equivalent to another point 
+Under periodic boundary conditions, any point $\vec{r}$ within this unit cell is equivalent to another point according to
 
 \begin{equation}
-    \vec{r} = \vec{r} + \vec{R}
+    \vec{r} \sim \vec{r} + \vec{R},
 \end{equation}
 
 wherein
@@ -68,9 +68,9 @@ wherein $i = \sqrt{-1}$ is the imaginary number and $\vec{G}$ a plane wave vecto
 
 \begin{align}
     \vec{G}_{i_{1},i_{2},i_{3}} = 
-    &\left(i_{1} - \frac{N_{1}}{2} \right)\vec{b_{1}} + \label{eq:gvectors} \\ \nonumber
-    &\left(i_{2} - \frac{N_{2}}{2} \right)\vec{b_{2}} + \\ \nonumber
-    &\left(i_{3} - \frac{N_{3}}{2} \right)\vec{b_{3}}
+    &\left(i_{1} - \left\lfloor\frac{N_{1}}{2}\right\rfloor \right)\vec{b_{1}} + \label{eq:gvectors} \\ \nonumber
+    &\left(i_{2} - \left\lfloor\frac{N_{2}}{2}\right\rfloor \right)\vec{b_{2}} + \\ \nonumber
+    &\left(i_{3} - \left\lfloor\frac{N_{3}}{2}\right\rfloor \right)\vec{b_{3}}
 \end{align}
 
 which in turn are derived from the reciprocal lattice vectors $\vec{b}_{i}$ which are given by
@@ -81,7 +81,7 @@ which in turn are derived from the reciprocal lattice vectors $\vec{b}_{i}$ whic
     \vec{b_{3}} &= 2 \pi \frac{\vec{a_{1}} \times \vec{a_{2}}}{\Omega} \label{eq:reciproc-latv3}
 \end{align}
 
-where $N_{1}$, $N_{2}$, $N_{3}$ act as the number of discretization points used to sample the real-space unitcell and $0 \leq i_{x} < N_{x}$ with $x \in 1,2,3$.
+where $N_{1}$, $N_{2}$, $N_{3}$ act as the number of discretization points used to sample the real-space unitcell and $0 \leq i_{x} < N_{x}$ with $x \in \{1,2,3\}$. The expression in \cref{eq:gvectors} assumes that the reciprocal-space axes have been shifted such that the zero-frequency component is centered. For even values of $N_x$, the integer multiplying $\vec{b}_x$ ranges from $-N_x/2$ to $N_x/2-1$, whereas for odd values it ranges from $-(N_x-1)/2$ to $(N_x-1)/2$.
 
 Alternatively, the matrix $\mat{B}$ describing the reciprocal lattice vectors in its row space can be obtained via
 
@@ -114,7 +114,7 @@ $\mathbf{I}_{3}$ being the 3x3 identity matrix and $a$ the lattice constant, the
 %
 %
 %
-\subsection{Orthonormality relationship}
+\subsection{Orthonormality of plane waves}
 
 The plane waves spanned from a single unit cell form an orthonormal set. The orthonormality relationship can be readily verified by evaluating the following expression
 
@@ -141,12 +141,12 @@ where $\delta_{\vec{G},\vec{G}\prime}$ represents the Kronecker delta function w
     \end{cases}
 \end{equation}
 
-From the result of \cref{eq:pw-ortho} it can thus be concluded that two plane waves, whose wave vectors $\vec{G}$ obey \cref{eq:gvectors}, that have difference values for $\vec{G}$ are orthogonal functions with respect to each other.
+From the result of \cref{eq:pw-ortho} it can thus be concluded that two plane waves, whose wave vectors $\vec{G}$ obey \cref{eq:gvectors}, that have different values for $\vec{G}$ are orthogonal functions with respect to each other.
 
 %
 %
 %
-\subsection{Evaluation of expansion coefficients}
+\subsection{Plane-wave expansion of periodic functions}
 
 Any arbitrary function $u(\vec{r})$ that resides inside the unit cell that meets the condition
 
@@ -175,9 +175,42 @@ As can be seen, the above integral provides a mathematical recipe for finding th
 %
 %
 %
+\subsection{Bloch's theorem and $\vec{k}$-point sampling}
+
+The periodicity condition in \cref{eq:perfunc} implies that the function has both the same amplitude and phase in neighboring unit cells. For an electronic wave function in a periodic crystal, this condition is unnecessarily restrictive. Although observable quantities such as the electron density have to be periodic, the phase of the wave function is allowed to change between neighboring unit cells. This can be expressed as
+
+\begin{equation}
+    \psi_{n\vec{k}}(\vec{r}+\vec{R}) = \exp\left(i\vec{k}\cdot\vec{R}\right)\psi_{n\vec{k}}(\vec{r}),
+    \label{eq:bloch-periodicity}
+\end{equation}
+
+where $\vec{k}$ is termed a \textbf{$\vec{k}$-point}. In simple terms, a $\vec{k}$-point specifies the change in phase of the wave function upon moving from one unit cell to another. For example, in a one-dimensional chain, $\vec{k}\cdot\vec{R}=0$ corresponds to neighboring copies of the wave function being in-phase, whereas $\vec{k}\cdot\vec{R}=\pi$ corresponds to an alternating phase between neighboring cells. This resembles the in-phase and out-of-phase combinations of atomic orbitals encountered in chemical bonding theory. Intermediate values describe a gradual rotation of the complex phase between neighboring cells.
+
+Importantly, the phase factor in \cref{eq:bloch-periodicity} has a magnitude of unity. Consequently, even when the phase of the wave function changes, its squared magnitude remains periodic according to
+
+\begin{equation}
+    \left|\psi_{n\vec{k}}(\vec{r}+\vec{R})\right|^{2} = \left|\psi_{n\vec{k}}(\vec{r})\right|^{2}.
+\end{equation}
+
+Bloch's theorem states that a wave function obeying \cref{eq:bloch-periodicity} can be written as the product of a phase factor and a periodic function. Expanding this periodic function in plane waves yields Kohn--Sham states of the form
+
+\begin{equation}
+    \psi_{n\vec{k}}(\vec{r}) = \frac{1}{\sqrt{\Omega}} \sum_{\vec{G}} \tilde{\psi}_{n\vec{k}}(\vec{G}) \exp\left(i(\vec{k}+\vec{G})\cdot\vec{r}\right).
+    \label{eq:bloch-pw-exp}
+\end{equation}
+
+The $\vec{k}$-points and $\vec{G}$-vectors thus have different roles. A $\vec{k}$-point specifies the phase relationship between neighboring unit cells, whereas the $\vec{G}$-vectors specify the plane waves used to expand the wave function for that particular $\vec{k}$-point. Values of $\vec{k}$ that differ by a reciprocal lattice vector describe the same phase relationship between unit cells. The unique set of $\vec{k}$-points that therefore needs to be considered can be restricted to a region in reciprocal-space known as the \textbf{first Brillouin zone}.
+
+Different $\vec{k}$-points generally yield different Kohn--Sham states and energies. Properties of a periodic crystal therefore involve an integration over the first Brillouin zone, which is approximated computationally by evaluating a finite set of $\vec{k}$-points. This procedure is known as \textbf{$\vec{k}$-point sampling}.
+
+Throughout this work, we restrict ourselves to the $\Gamma$-point, which corresponds to $\vec{k}=\vec{0}$. From \cref{eq:bloch-periodicity}, it can be seen that this implies that the wave function has the same phase in all neighboring periodic copies of the unit cell. For isolated atoms and molecules placed inside a sufficiently large unit cell, interactions between neighboring copies become negligible and sampling only the $\Gamma$-point is generally sufficient. A more detailed treatment of $\vec{k}$-point sampling falls outside the scope of this work.
+
+%
+%
+%
 \subsection{Basis set truncation}
 
-With the aim to actually use a plane wave expansion to describe an arbitrary function, it becomes relevant to more accurately define the basis set. Fundamentally speaking, the number of discretization points ($N_{1}$, $N_{2}$ and $N_{3}$) in \cref{eq:gvectors} can be chosen arbitrarily large, yet from a computational point of view it makes sense to truncate the expansion of \cref{eq:plane-wave-exp} by allowing only those plane waves whose kinetic energy is less than a certain threshold value. This threshold value is termed the cut-off energy. The kinetic energy of a plane wave is found via
+With the aim to actually use a plane wave expansion to describe an arbitrary function, it becomes relevant to more accurately define the basis set. Fundamentally speaking, the reciprocal-space grid in \cref{eq:gvectors} can be chosen arbitrarily large, yet from a computational point of view it makes sense to truncate the expansion of \cref{eq:plane-wave-exp} by allowing only those plane waves whose kinetic energy is less than a certain threshold value. This threshold value is termed the cut-off energy. The kinetic energy of a plane wave is found via
 
 \begin{align}
     E_{k} &= \left<\phi(\vec{G},\vec{r}) \left| -\frac{1}{2} \nabla^{2} \right|\phi(\vec{G},\vec{r})\right> \\
@@ -191,12 +224,14 @@ and corresponds to half the squared modulus of the plane wave vector $\vec{G}$. 
     \frac{1}{2} \left| \vec{G} \right|^{2} < E_{\textrm{cut}}.
 \end{equation}
 
+The cut-off thus selects a spherical subset of plane waves from the parallelepiped reciprocal-space grid provided by the FFT. The FFT grid has to be sufficiently large to contain this subset without aliasing. Furthermore, products evaluated in real-space can contain higher-frequency components than the original wave functions. For example, the density $|\psi(\vec{r})|^{2}$ can contain plane wave vectors up to approximately twice the largest plane wave vector used to represent $\psi(\vec{r})$, and therefore typically requires a denser FFT grid.
+
 %
 %
 %
 \subsection{Fast Fourier transforms}
 
-Although \cref{eq:pwcoeff-int} provides a straightforward recipe to find the $\tilde{u}(\vec{G})$, when one is tasked to find the set $\{\tilde{u}(\vec{G})\}$ it turns out that there is a significantly more efficient numerical recipes available, known as the Fast Fourier transform (FFT). Uniquely, the FFT tactically exploits common operations in the evaluation of the integrals for plane waves within the same set (e.g. those spanned from the same unit cell) such that in contrast to the typical $N^{3}$ scaling observed in numerical integration, one obtains a mere $N \log N$ scaling. As both algorithms are able to make efficient use of multi-core computational architectures, the scaling relationship is the dominant discriminating factor between the two procedures. As such, it should be clear from the scaling relationship that usage of FFT algorithms to calculate the expansion coefficient evaluations are the preferred choice.
+Although \cref{eq:pwcoeff-int} provides a straightforward recipe to find the $\tilde{u}(\vec{G})$, when one is tasked to find the set $\{\tilde{u}(\vec{G})\}$ it turns out that there is a significantly more efficient numerical recipe available, known as the Fast Fourier transform (FFT). Uniquely, the FFT tactically exploits common operations in the evaluation of the transforms for plane waves within the same set (e.g. those spanned from the same unit cell) such that in contrast to the $N^{2}$ scaling of a direct discrete Fourier transform, one obtains a mere $N \log N$ scaling, wherein $N=N_xN_yN_z$ is the total number of sampling points. As both algorithms are able to make efficient use of multi-core computational architectures, the scaling relationship is the dominant discriminating factor between the two procedures. As such, it should be clear from the scaling relationship that usage of FFT algorithms to calculate the expansion coefficient evaluations is the preferred choice.
 
 The FFT algorithm is provided in many software packages for a diverse array of programming languages and environments. Just for the Python programming language alone, there are already three commonly-used libraries available, corresponding to those implemented in NumPy\cite{numpy} and SciPy\cite{scipy} and one dedicated module PyFFTW. These libraries differ in their ease of use and computational efficiency, yet all perform the FFT using the same underlying mathematical conventions and thus yield the same result. It is relevant to emphasize here that this does not have to be the case and before using any kind of numerical implementation of the FFT, one should critically read its documentation to assess which conventions are in place.
 
@@ -209,9 +244,17 @@ The FFT algorithm is provided in many software packages for a diverse array of p
 
 The way that the FFT works is that it takes as input a discretized scalar field, i.e. the values of the function $f_{i} = f(\vec{r_{i}})$ taken at sampling points $\left\{\vec{r}_{i}\right\}$. The output of the FFT corresponds to the values of the expansion coefficients $\tilde{f}(\vec{G_{i}})$ for the set of plane wave vectors $\left\{ \vec{G}_{i} \right\}$. The sets $\left\{\vec{r}_{i}\right\}$ and $\left\{\vec{G}_{i}\right\}$ are related in the sense that they both pertain to an equidistant discretization of their corresponding spaces, i.e. \textbf{real-space} and \textbf{reciprocal-space} representations, and are of the same size and dimensionality. The FFT thus acts as a basis set transformation between basis functions spanning the real-space and another basis set spanning the reciprocal-space, the latter set being the plane waves.
 
-In \cref{fig:sampling}, an example is provided for a cubic unit cell with edges of size $a_{0} = 1$ a.u. and $N = 8$ sampling points per Cartesian direction. In the graph on the left hand side, we can see the 64 sampling points that lie in the plane $z=5$. In total, there are 8 such planes in which the values for the function to be transformed are going to be sampled. Application of the FFT will result in the expansion coefficients for the set of plane waves whose reciprocal lattice vectors are shown in the right graph in \cref{fig:sampling}. Observe that with increasing distance from the origin, the $\vec{G}$-vectors corresponds to increasingly stronger oscillating plane waves with increasing kinetic energy.
+In \cref{fig:sampling}, an example is provided for a cubic unit cell with edges of size $a_{0} = 1$ a.u. and $N = 8$ sampling points per Cartesian direction. In the graph on the left hand side, we can see the 64 sampling points that lie in the plane $z=0.5$. In total, there are 8 such planes in which the values for the function to be transformed are going to be sampled. Application of the FFT will result in the expansion coefficients for the set of plane waves whose reciprocal lattice vectors are shown in the right graph in \cref{fig:sampling}. Observe that with increasing distance from the origin, the $\vec{G}$-vectors correspond to increasingly strongly oscillating plane waves with increasing kinetic energy.
 
-Since the plane waves are periodic functions, there is some level of arbitrariness to the exact position of the sampling points. We are allowed to translate all sampling points by a displacement vector $\vec{d}$ as long as the periodicity of the unit cell is respected. Slightly different expansion coefficients can perhaps be obtained, but when a sufficiently dense sampling grid is taken, numerical differences are expected to be minimal.
+Since the plane waves are periodic functions, there is some level of arbitrariness to the exact position of the sampling points. We are allowed to translate all sampling points by a displacement vector $\vec{d}$ as long as the periodicity of the unit cell is respected. Such a translation produces a well-defined phase change in the expansion coefficients. Provided that the position of the grid origin is treated consistently, no physical information is changed.
+
+The spacing of the sampling points also limits which plane waves can be represented unambiguously. For a one-dimensional interval of length $L$ sampled using $N$ equidistant points, the grid spacing and Nyquist angular frequency are given by
+
+\begin{equation}
+    \Delta x = \frac{L}{N}, \qquad G_{\textrm{Nyq}} = \frac{\pi}{\Delta x} = \frac{\pi N}{L}.
+\end{equation}
+
+The Nyquist frequency is the highest frequency that can be represented on the grid without ambiguity. Frequencies above this limit become indistinguishable from lower frequencies, a phenomenon known as \textbf{aliasing}. In three dimensions, this restriction applies independently along each reciprocal-lattice direction. Consequently, the FFT grid should be chosen such that the plane waves retained by the cut-off obey the Nyquist limit in every direction. For an even number of sampling points, the plane waves at $+G_{\textrm{Nyq}}$ and $-G_{\textrm{Nyq}}$ have identical values on the sampling grid and therefore correspond to a single Nyquist mode.
 
 The FFT implementation in NumPy, Scipy and PyFFTW is defined such that the value at $f(\vec{r_{i}})$ is calculated from the expansion coefficients $\tilde{f}(\vec{G_{i}})$ via
 
@@ -269,7 +312,7 @@ FFT have a number of relevant properties. Here, I will mention those that are re
 
     \item 
 
-    A convolution in real-space corresponds to a product in reciprocal-space and likewise, a product in real-space is a convolution in reciprocal-space. Thus,
+    A circular convolution in discretized real-space corresponds to a product in reciprocal-space and likewise, a product in real-space corresponds to a circular convolution in reciprocal-space, up to a normalization constant that depends on the Fourier-transform convention. Thus, symbolically,
 
     \begin{equation}
         \fft\left[f(\vec{r}) \ast g(\vec{r}) \right] = \tilde{f}(\vec{G}) \cdot \tilde{g}(\vec{G})
@@ -278,14 +321,14 @@ FFT have a number of relevant properties. Here, I will mention those that are re
     and
 
     \begin{equation}
-        \ifft\left[\tilde{f}(\vec{G}) \ast \tilde{g}(\vec{G}) \right] = f(\vec{r}) \cdot g(\vec{r}).
+        \ifft\left[\tilde{f}(\vec{G}) \ast \tilde{g}(\vec{G}) \right] \propto f(\vec{r}) \cdot g(\vec{r}).
     \end{equation}
 
-    The implication of this property is that certain operations are best executed in real-space or in reciprocal-space. A salient example is the evaluation of the electron density. Since this corresponds to the product of the wave function with itself, this is best executed in real-space. In contrast, the evaluation of the classical electrostatic energy of a charge cloud corresponds to a convolution in real-space and is thus most effectively evaluated in reciprocal-space where it only constitutes a product.
+    The precise normalization factor in the second expression has to be established from the definitions of $\fft$, $\ifft$ and the discrete convolution. The implication of this property is that certain operations are best executed in real-space or in reciprocal-space. A salient example is the evaluation of the electron density. Since this corresponds to the product of the complex conjugate of the wave function with the wave function itself, $\psi^{*}(\vec{r})\psi(\vec{r})=|\psi(\vec{r})|^{2}$, this is best executed in real-space. In contrast, the evaluation of the classical electrostatic energy of a charge cloud corresponds to a convolution in real-space and is thus most effectively evaluated in reciprocal-space where it only constitutes a product.
 
     \item
 
-    The FFT of a real-valued scalar field produces a symmetric transform. This can be readily understood from the fact that sampling with a plane wave that osscillates in the positive direction yields in principle the same result as one that oscillates in the negative direction, though with its imaginary part inverted. Thus, for a transform
+    The FFT of a real-valued scalar field produces a symmetric transform. This can be readily understood from the fact that sampling with a plane wave that oscillates in the positive direction yields in principle the same result as one that oscillates in the negative direction, though with its imaginary part inverted. Thus, for a transform
     
     \begin{equation}
         \tilde{f}(\vec{G}) = \fft\left[f(\vec{r})\right],\;\text{with}\;f(\vec{r}): \mathbb{R}^{3} \rightarrow \mathbb{R}
@@ -319,8 +362,8 @@ Building upon the derivation of the kinetic energy of a single plane wave as sho
 
 \begin{align}
     E_{\text{kin}} &= \left<\psi(\vec{r})\left|-\frac{1}{2}\nabla^{2}\right|\psi(\vec{r})\right> \\
-    &= \frac{1}{2} \sum_{\vec{G}\prime}\sum_{\vec{G}} \tilde{\psi}(\vec{G}) \tilde{\psi}(\vec{G}\prime) |\vec{G}|^{2} \braket{\phi(\vec{G}\prime)|\phi(\vec{G})} \\
-    &= \frac{1}{2} \sum_{\vec{G}\prime}\sum_{\vec{G}} \tilde{\psi}(\vec{G}) \tilde{\psi}(\vec{G}\prime) |\vec{G}|^{2} \delta_{G,G\prime} \\
+    &= \frac{1}{2} \sum_{\vec{G}\prime}\sum_{\vec{G}} \tilde{\psi}(\vec{G}\prime)^{*} \tilde{\psi}(\vec{G}) |\vec{G}|^{2} \braket{\phi(\vec{G}\prime)|\phi(\vec{G})} \\
+    &= \frac{1}{2} \sum_{\vec{G}\prime}\sum_{\vec{G}} \tilde{\psi}(\vec{G}\prime)^{*} \tilde{\psi}(\vec{G}) |\vec{G}|^{2} \delta_{\vec{G},\vec{G}\prime} \\
     &=\frac{1}{2}\sum_{\vec{G}} |\tilde{\psi}(\vec{G})|^{2} \cdot |\vec{G}|^{2}
     \label{eq:kin_en}
 \end{align}
@@ -356,7 +399,7 @@ The wave function as defined by \cref{eq:horb_1s} has an analytical solution for
 
 \begin{align}
     E_{\text{kin}} &= \left<\psi_{\text{1s}} \left| -\frac{1}{2} \nabla^{2} \right| \psi_{\text{1s}}\right> \\
-    &= 4 \int dr \; r^{2} \exp \left( -r \right) \cdot \left(r^{-2} \frac{d}{dr} \left( r^{2} \frac{d}{dr} \exp \left( -r \right)\right)\right) \\
+    &= -2 \int_{0}^{\infty} dr \; r^{2} \exp \left( -r \right) \cdot \left(r^{-2} \frac{d}{dr} \left( r^{2} \frac{d}{dr} \exp \left( -r \right)\right)\right) \\
     &= \frac{1}{2}. \label{eq:kinen}
 \end{align}
 
