@@ -5,26 +5,25 @@
 
 \begin{tikzpicture}[node distance=2cm]
 
-\node (start) [startstop] {Start: Initial guess for $\rho$};
-\node (process1) [process, below of=start] {Construct $\nu_{\text{J}}[\rho]$ and $\nu_{\text{xc}}[\rho]$};
-\node (process2) [process, below of=process1, align=center] {Approximate lowest $N$\\Kohn-Sham states\\(Arnoldi method)};
-\node (decision1) [decision, below of=process2, yshift=-1cm] {$\left\{\psi_{i}\right\}_{N}$ converged?};
-\node (process3) [process, below of=decision1, yshift=-1cm] {Calculate $E_{\text{total}}$};
-\node (decision2) [decision, below of=process3, yshift=-1cm] {$E_{\text{total}}$ converged?};
-\node (process4) [process, right of=decision2, xshift=4cm] {Update $\rho$};
-\node (process5) [process, right of=decision1, xshift=2cm] {Set $\psi_{0}$};
+\node (start) [startstop] {Choose initial $\rho_{\text{in}}$};
+\node (hamiltonian) [process, below of=start, align=center]
+    {Construct the fixed Hamiltonian\\$\mat{H}[\rho_{\text{in}}]$};
+\node (eigensolver) [process, below of=hamiltonian, align=center]
+    {Inner Arnoldi/Lanczos solve\\until $\|\mat{H}\vec{u}_{i}-\theta_i\vec{u}_{i}\|<\tau_{\text{eig}}$};
+\node (density) [process, below of=eigensolver, align=center]
+    {Construct $\rho_{\text{out}}$ and\\calculate $E_{\text{tot}}$};
+\node (converged) [decision, below of=density, yshift=-1cm, align=center]
+    {SCF\\converged?};
+\node (mix) [process, right of=converged, xshift=4cm, align=center]
+    {Mix $\rho_{\text{in}}$ and\\$\rho_{\text{out}}$};
+\node (stop) [startstop, below of=converged, yshift=-1cm] {Done};
 
-\node (stop) [startstop, below of=decision2, yshift=-1cm] {Done};
-
-\draw [arrow] (start) -- (process1);
-\draw [arrow] (process1) -- (process2);
-\draw [arrow] (process2) -- (decision1);
-\draw [arrow] (decision1) -- node[anchor=east] {Yes} (process3);
-\draw [arrow] (process3) -- (decision2);
-\draw [arrow] (process4) |- (process1);
-\draw [arrow] (decision2) -- node[anchor=east] {Yes} (stop);
-\draw [arrow] (decision2) -- node[anchor=north] {No} (process4);
-\draw [arrow] (process5) |- (process2);
-\draw [arrow] (decision1) -- node[anchor=north] {No} (process5);
+\draw [arrow] (start) -- (hamiltonian);
+\draw [arrow] (hamiltonian) -- (eigensolver);
+\draw [arrow] (eigensolver) -- (density);
+\draw [arrow] (density) -- (converged);
+\draw [arrow] (converged) -- node[anchor=east] {Yes} (stop);
+\draw [arrow] (converged) -- node[anchor=north] {No} (mix);
+\draw [arrow] (mix) |- (hamiltonian);
 
 \end{tikzpicture}

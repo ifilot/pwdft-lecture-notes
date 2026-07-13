@@ -3,117 +3,146 @@
 %
 \section{Self-consistent field procedure}
 
-Central to solving the electronic structure problem using a basis set is finding solutions to the matrix eigenvalue problem, known as the Roothaan equations
+After expansion in a finite basis, the one-electron Kohn--Sham equations become a matrix eigenvalue problem. For a general, non-orthogonal basis this problem is
 
 \begin{equation}
-    \mat{H}\mat{C} = \mat{E}\mat{S}\mat{C}.
+    \mat{H}\mat{C} = \mat{S}\mat{C}\boldsymbol{\varepsilon},
 \end{equation}
 
-The orthonormality relation among the plane waves simplifies the above expression to
+where the columns of \(\mat{C}\) contain the basis-set coefficients of the Kohn--Sham orbitals, \(\mat{S}\) is the overlap matrix, and \(\boldsymbol{\varepsilon}\) is the diagonal matrix of orbital energies. Plane waves are orthonormal, so \(\mat{S}\) is the identity matrix and the problem simplifies to
 
 \begin{equation}
-    \mat{H}\mat{C} = \mat{E}\mat{C}.
+    \mat{H}\mat{C} = \mat{C}\boldsymbol{\varepsilon}.
     \label{eq:roothaan}
 \end{equation}
 
-as the overlap matrix $\mat{S}$ is simply the identity matrix. Despite this simplification, \textit{fully} solving the above equation remains daunting due to the sheer number of basis functions (plane waves) involved. Fully solving \cref{eq:roothaan} corresponds to diagonalizing the matrix $\mat{H}$, an operation that scales with $N_{\text{pw}}^{3}$. 
+For a single orbital, \cref{eq:roothaan} reads \(\mat{H}\vec{c}_{i}=\varepsilon_i\vec{c}_{i}\). If \(N_{\text{pw}}\) plane waves are used, explicitly storing the complete Hamiltonian requires memory proportional to \(N_{\text{pw}}^{2}\), while a full diagonalization requires approximately \(N_{\text{pw}}^{3}\) operations. Both costs rapidly become prohibitive.
 
-Assuming without any loss of generality that the Kohn-Sham states are doubly occupied\footnote{In other words, we assume that our system is spin-unpolarized.}, typically the case for closed-shell systems, the expression for the total electronic energy would be
-
-\begin{equation}
-    E_{\text{total}} = 2\sum_{i}^{N_{\text{elec}}/2} \left< \psi_{i} \left|-\frac{1}{2} \nabla^{2} \right| \psi_{i} \right> + \int_{\Omega} \rho(\vec{r}) \nu(\vec{r}) \; d\vec{r}
-    \label{eq:energy_total_analytical}
-\end{equation}
-
-where the electron density $\rho(\vec{r})$ is given by
+For clarity, we consider a spin-unpolarized, closed-shell system at zero electronic temperature, so that every occupied spatial orbital contains two electrons. The electron density is then
 
 \begin{equation}
-    \rho(\vec{r}) = 2\sum_{i}^{N_{\text{elec}}/2} |\psi_{i}(\vec{r})|^{2}.
+    \rho(\vec{r}) = 2\sum_{i=1}^{N_{\text{elec}}/2} |\psi_{i}(\vec{r})|^{2}.
     \label{eq:edens_analytical}
 \end{equation}
 
-From \cref{eq:energy_total_analytical,eq:edens_analytical}, it is apparent that we only require the solutions to the first, i.e. lowest in energy, $N_{\text{elec}}/2$ Kohn-Sham states to obtain all properties of interest. As $N_{\text{elec}}/2 \ll N_{\textrm{pw}}$, fully solving \cref{eq:roothaan} would be a waste of computational resources and would take an unnecessarily long time.
+The density and the ground-state total energy in \cref{eq:gth-total-energy} therefore require only the \(N_{\text{elec}}/2\) occupied orbitals, rather than all \(N_{\text{pw}}\) eigenvectors of the Hamiltonian. In practice, a calculation may request some additional states: metals and finite-temperature calculations can have partially occupied bands, while response properties, excited-state methods and band-gap calculations also require unoccupied states. Here we restrict attention to the occupied states needed for a zero-temperature ground-state calculation.
 
-Fortunate for the field of computational chemistry (and many computational fields in general), there exist effective algorithms that allow one to only calculate a few eigenvector and -value pairs in a very large set. Furthermore, one can choose whether to find the lowest or highest eigenvalues in these algorithms. This aspect is important as only those eigenvectors that have the lowest eigenvalues are the most relevant in electronic structure calculations. The specific choice which method to use depends on the matrix properties such as symmetry or sparsity. For electronic structure calculations, the matrix $\mat{H}$ is typically sparse and diagonally dominant, making especially the Arnoldi\cite{1951:arnoldi} and Davidson\cite{1975:davidson} methods very effective. Within this work, we will focus on using the Arnoldi method as it is readily available in Scipy.\cite{arnoldi_scipy}
+Iterative eigensolvers exploit this difference in size and calculate only a selected part of the spectrum. The plane-wave Hamiltonian is Hermitian and highly structured, but it is not generally sparse when represented as a matrix in reciprocal space: the kinetic term is diagonal, a local potential produces a convolution, and the non-local pseudopotential adds projector terms. The useful property is that the action \(\vec{c}\mapsto\mat{H}\vec{c}\) can be evaluated efficiently without ever constructing the full matrix. Such an implementation is called \textbf{matrix-free}. Arnoldi, Lanczos and Davidson methods are examples of iterative eigensolvers that can use this matrix-free operation.\cite{1951:arnoldi,1975:davidson} We next discuss Arnoldi because its construction illustrates the central idea and because an implicitly restarted implementation is available through SciPy's ARPACK interface.\cite{arnoldi_scipy}
 
 %
 %
 %
 \subsection{Arnoldi method}
 
-Using the Arnoldi method, one can approximate eigenvalues and eigenvectors of large, sparse matrices. The number of required eigenvector/-value pairs can be freely set and the method allows to focus on the lowest eigenvalues, i.e. those that are most relevant for the electronic structure calculation as unoccupied (virtual) Kohn-Sham states have no contributions to the total electronic energy.
+The central idea of Arnoldi is to replace one very large eigenvalue problem by a much smaller one. The method constructs an adaptive basis of trial orbitals and represents the Hamiltonian in that trial space. Diagonalizing the resulting small matrix determines how the trial orbitals should be mixed to approximate the desired Kohn--Sham orbitals.
 
-Another strong feature of the Arnoldi method is that the Hamiltonian matrix $\mat{H}$ does not have to be explicitly known, only its effect when applied to an arbitrary vector $\vec{c}$ is required. Specifically, the result of the following equation
-
-\begin{equation}
-    \vec{c}\;\prime = \mat{H}\vec{c}
-\end{equation}
-
-needs to be known. Using the plane wave basis set and the FFT to our advantage, this operation can be encapsulated as
+During one Arnoldi solve, the electron density and hence the Hamiltonian are held fixed. Starting from a normalized vector \(\vec{q}_{1}\), the method explores the \(m\)-dimensional \textbf{Krylov subspace}
 
 \begin{equation}
-    \hat{\mathcal{H}}\tilde{\psi}(\vec{G}) = \frac{1}{2} \hat{\mathcal{L}}\tilde{\psi}(\vec{G})
-    + \fftpw\left[\ifftpw\left[\tilde{\psi}(\vec{G}) \right] \circ \nu_{\text{eff}}^{\text{loc}}(\vec{r}) \right]
-    + \hat{V}_{\text{nl}}\tilde{\psi}(\vec{G})
-    \label{eq:appl_hamil}
+    \mathcal{K}_{m}(\mat{H},\vec{q}_{1}) =
+    \operatorname{span}\left\{
+    \vec{q}_{1},\mat{H}\vec{q}_{1},\mat{H}^{2}\vec{q}_{1},\ldots,
+    \mat{H}^{m-1}\vec{q}_{1}\right\}.
+    \label{eq:krylov-space}
 \end{equation}
 
-where $\hat{\mathcal{L}}$ is the Laplacian operator, which when applied to the plane wave expansion of a Kohn-Sham state $\tilde{\psi}(\vec{G})$ yields
+The vectors in \cref{eq:krylov-space} should not be used as written because repeated multiplication makes them nearly linearly dependent. Arnoldi instead constructs orthonormal vectors \(\{\vec{q}_{1},\ldots,\vec{q}_{m}\}\) spanning the same space. At iteration \(j\), it first applies the Hamiltonian,
 
 \begin{equation}
-    \frac{1}{2} \hat{\mathcal{L}}\tilde{\psi}(\vec{G}) = \frac{1}{2} \cdot |\vec{G}|^{2} \circ \tilde{\psi}(\vec{G}).
-    \label{eq:laplacian_applied}
+    \vec{w}=\mat{H}\vec{q}_{j},
 \end{equation}
 
-where $\circ$ corresponds to the Hadamard\footnote{The Hadamard product is simply the element-wise multiplication of two array-like objects. In \cref{eq:appl_hamil,eq:laplacian_applied}, $\tilde{\psi}(\vec{G})$ is a three-dimensional array of plane-wave coefficients. A Hadamard multiplication on $\tilde{\psi}(\vec{G})$ requires an array-like object of matching dimensions producing another array-like object of the same dimensions.} product operator. With a GTH pseudopotential, $\nu_{\text{eff}}^{\text{loc}}(\vec{r})$ is the local part of the effective potential,
+and then removes all components that point along trial orbitals already present,
+
+\begin{align}
+    h_{ij} &= \vec{q}_{i}^{\dagger}\vec{w}, & i&=1,\ldots,j,\\
+    \vec{w} &\leftarrow \vec{w}-h_{ij}\vec{q}_{i}, & i&=1,\ldots,j.
+    \label{eq:arnoldi-orthogonalize}
+\end{align}
+
+Here \(\dagger\) denotes the complex-conjugate transpose. The remaining component is normalized to produce the next basis vector,
+
+\begin{align}
+    h_{j+1,j} &= \|\vec{w}\|,\\
+    \vec{q}_{j+1} &= \frac{\vec{w}}{h_{j+1,j}}.
+    \label{eq:arnoldi-normalize}
+\end{align}
+
+Chemically, each \(\vec{q}_{j}\) is a trial orbital expressed in the original plane-wave basis. Application of \(\mat{H}\) reveals new directions relevant to the energy spectrum, while the orthogonalization in \cref{eq:arnoldi-orthogonalize} prevents the method from repeatedly rediscovering the same direction.
+
+Collecting the trial orbitals in \(\mat{Q}_{m}=[\vec{q}_{1},\ldots,\vec{q}_{m}]\) produces the Arnoldi relation
 
 \begin{equation}
-    \nu_{\text{eff}}^{\text{loc}}(\vec{r}) = V_{\text{loc}}(\vec{r}) + \nu_{u}(\vec{r}) + \nu_{\text{xc}}(\vec{r}),
+    \mat{H}\mat{Q}_{m}
+    = \mat{Q}_{m}\mat{H}_{m}
+    +h_{m+1,m}\vec{q}_{m+1}\vec{e}_{m}^{\,T},
+    \qquad
+    \mat{H}_{m}=\mat{Q}_{m}^{\dagger}\mat{H}\mat{Q}_{m}.
+    \label{eq:arnoldi-relation}
 \end{equation}
 
-and $\hat{V}_{\text{nl}}$ is the non-local projector contribution. In an all-electron calculation without a pseudopotential, $V_{\text{loc}}$ would be replaced by the bare external potential $\nu_{\text{ext}}$ and $\hat{V}_{\text{nl}}$ would be absent.
+The projected matrix \(\mat{H}_{m}\) is only \(m\times m\) and has upper-Hessenberg form, meaning that all entries below its first subdiagonal are zero. It can therefore be diagonalized inexpensively,
 
-\cref{eq:appl_hamil} may seem counterintuitive, as it involves first transforming the plane-wave representation of the wave function, $\psi(\vec{G})$, to its real-space form. The local effective potential is then applied in real-space, and subsequently, the result is converted back to the plane-wave representation. The sole reason for this is that the exchange-correlation energy is determined in real-space and involves a multiplication in real-space. This implies that its evaluation in the plane wave basis would require a very expensive convolution. Despite that it looks more convoluted\footnote{No pun intended.}, the sequence of operations as conducted in \cref{eq:appl_hamil} is computationally more efficient.
+\begin{equation}
+    \mat{H}_{m}\vec{y}_{i}=\theta_{i}\vec{y}_{i}.
+    \label{eq:ritz-small}
+\end{equation}
+
+The eigenvalue \(\theta_i\) is called a \textbf{Ritz value}. The corresponding \textbf{Ritz vector} in the original plane-wave basis is
+
+\begin{equation}
+    \vec{u}_{i}=\mat{Q}_{m}\vec{y}_{i}.
+    \label{eq:ritz-vector}
+\end{equation}
+
+Thus, \(\vec{y}_{i}\) gives the coefficients with which the trial orbitals must be mixed to form an approximate Kohn--Sham orbital \(\vec{u}_{i}\). Its accuracy is measured by the eigenproblem residual
+
+\begin{equation}
+    \vec{r}_{i}=\mat{H}\vec{u}_{i}-\theta_{i}\vec{u}_{i},
+    \qquad
+    \|\vec{r}_{i}\|
+    =\left|h_{m+1,m}\vec{e}_{m}^{\,T}\vec{y}_{i}\right|.
+    \label{eq:ritz-residual}
+\end{equation}
+
+An eigenpair is accepted when its residual norm is smaller than a chosen tolerance. Monitoring the residual is more reliable than checking only whether the orbital energy has stopped changing. For degenerate states, individual orbitals are not unique because any orthonormal mixture within the degenerate space is equally valid; in that case it is the subspace spanned by those orbitals that should converge.
+
+The requested number of eigenpairs cannot be increased without cost. More states generally require a larger Krylov space, more stored vectors and more orthogonalization work. Because allowing the space to grow indefinitely would eventually become expensive, practical implementations periodically \textbf{restart}: they retain the most useful Ritz information and build a new, compact Krylov space. SciPy's \texttt{eigs} routine uses the implicitly restarted Arnoldi method.\cite{arnoldi_scipy}
+
+The Kohn--Sham Hamiltonian is Hermitian. For a Hermitian matrix, Arnoldi reduces in exact arithmetic to the closely related \textbf{Lanczos method}, and \(\mat{H}_{m}\) becomes tridiagonal. SciPy's \texttt{eigsh} routine uses an implicitly restarted Lanczos method for a real-symmetric problem; for a complex-Hermitian input, SciPy currently delegates to \texttt{eigs}.\cite{lanczos_scipy} The general Arnoldi construction is presented here because it also applies when the implementation treats the Hamiltonian as a general complex operator.
+
+Finally, ``lowest'' must not be confused with ``smallest in magnitude.'' In a chemical calculation the occupied states have the smallest \emph{algebraic} eigenvalues, meaning the energies at the lower end of the spectrum, whereas an eigenvalue of smallest magnitude is merely closest to zero. In SciPy this distinction corresponds, for a Hermitian problem, to \texttt{which='SA'} versus \texttt{which='SM'}. Arnoldi-type methods often converge more readily to large-magnitude eigenvalues; transformations such as shift-invert can improve access to other parts of the spectrum but require the solution of linear systems.\cite{lanczos_scipy}
+
+Only Hamiltonian--vector products are needed throughout the Krylov construction. For the plane-wave Hamiltonian, the kinetic contribution is multiplied in reciprocal space, all multiplicative local potentials---ionic, Hartree and exchange-correlation---are applied in real space using FFTs, and the non-local projector contribution is added in reciprocal space. This matrix-free operation was detailed in \cref{eq:gth-hamiltonian} and the accompanying pseudocode.
+
+In compact form, Arnoldi repeatedly applies \(\mat{H}\), orthogonalizes the new trial orbital, diagonalizes the small projected Hamiltonian, and tests the Ritz residuals. It expands or restarts the trial space until all requested eigenpairs satisfy the tolerance.
 
 %
 %
 %
 \subsection{Electron density mixing}
 
-From the earlier section it was already established that $\nu_{\text{u}}[\rho]$ and $\nu_{\text{xc}}[\rho]$ depend on the electron density $\rho(\vec{r})$ and perhaps a more accurate way to write \cref{eq:roothaan} is
+The Hartree and exchange-correlation potentials depend on the electron density. To display this dependence explicitly, \cref{eq:roothaan} can be written as
 
 \begin{equation}
-    \mat{H}[\rho]\mat{C} = \mat{E}\mat{C},
+    \mat{H}[\rho]\mat{C} = \mat{C}\boldsymbol{\varepsilon},
     \label{eq:roothaan_explicit}
 \end{equation}
 
-wherein $\rho$ in turn depends on the coefficient matrix $\mat{C}$ which encapsulates in its column space the plane wave expansion coefficients of the molecular orbitals $\psi_{j}$ such that
+where the coefficient matrix \(\mat{C}\) contains the plane-wave coefficients of the Kohn--Sham orbitals,
 
 \begin{equation}
-    C_{ij} = \tilde{\psi}_{j}(\vec{G}_{i})
+    C_{ij} = \tilde{\psi}_{j}(\vec{G}_{i}),
 \end{equation}
 
-by which the electron density in real-space is calculated via
+and the occupied columns determine the new real-space density,
 
 \begin{equation}
-    \rho(\vec{r}) = 2\sum_{j}^{N_{\text{elec}} / 2} \left|\ifftpw \left[ \tilde{\psi}_{j}(\vec{G}) \right] \right|^{2}.
+    \rho_{\text{out}}(\vec{r}) = 2\sum_{j=1}^{N_{\text{elec}} / 2} \left|\ifftpw \left[ \tilde{\psi}_{j}(\vec{G}) \right] \right|^{2}.
     \label{eq:edens}
 \end{equation}
 
-The objective of the electronic structure optimization method is to tune the coefficients matrix $\mat{C}$ such that the total electronic energy $E_{\text{total}}$ is minimized, whose discretized form is given by
-
-\begin{equation}
-    E_{\text{total}} = 2\sum_{i}^{N_{\text{elec}}/2} \sum_{j}^{N_{\text{pw}}} |C_{ji}|^{2} |\vec{G}_{j}|^{2} + \Delta V \sum_{j}^{N_{\text{pw}}} \nu_{j}(\vec{r}_{j}) \rho(\vec{r}_{j}) + E_{\text{Ewald}}.
-    \label{eq:energy_total_discretized}
-\end{equation}
-
-In \cref{eq:energy_total_discretized}, the total kinetic energy is calculated in reciprocal space via summation over squared expansion coefficients and the squared plane wave vector magnitudes, in line with \cref{eq:kin_en}. The electrostatic and non-classical interaction terms are evaluated in real-space by means of essentially a Riemann sum over a number of sampling points equivalent to the number of plane waves, multiplied with the volume $\Delta V$ associated with each sampling points, being
-
-\begin{equation}
-    \Delta V = \frac{\Omega}{N_{\text{pw}}}.
-\end{equation}
-
-The point of \cref{eq:roothaan_explicit} is to emphasize that an iterative procedure to solve the electronic structure problem is required. The terms in the Hamiltonian $\hat{\mathcal{H}}$ depend on the electron density $\rho(\vec{r})$ which in turn depends on the plane wave expansion coefficients encapsulated in $\mat{C}$ which is the result of solving \cref{eq:roothaan_explicit}. In other words, we encounter the infamous ``chicken-egg'' problem. To resolve upon this dilemma, an self-consistent field approach is utilized wherein we start with an initial guess for $\rho(\vec{r})$, solve \cref{eq:roothaan_explicit}, and use the resulting $\mat{C}$ to construct an updated version of $\rho(\vec{r})$, by which we can repeat upon the procedure. We keep on performing these iterations until the electron density, or perhaps more elegantly the total electronic energy, no longer changes. A schematic overview of this procedure is shown in \cref{fig:scf}.
+Equations \eqref{eq:roothaan_explicit} and \eqref{eq:edens} form a feedback loop: the input density determines the Hamiltonian, and solving that Hamiltonian produces an output density. A self-consistent solution satisfies \(\rho_{\text{out}}=\rho_{\text{in}}\). The SCF procedure therefore starts from an initial density, constructs \(\mat{H}[\rho_{\text{in}}]\), solves its fixed-Hamiltonian eigenproblem, constructs \(\rho_{\text{out}}\), and repeats until the density residual and total energy in \cref{eq:gth-total-energy} are sufficiently converged. A schematic overview is shown in \cref{fig:scf}.
 
 \begin{Figure}
     \centering
@@ -124,28 +153,25 @@ The point of \cref{eq:roothaan_explicit} is to emphasize that an iterative proce
     \label{fig:scf}
 \end{Figure}
 
-Besides this outer iterative procedure shown in \cref{fig:scf}, also an inner iterative procedure corresponding to the Arnoldi method is shown. The Arnoldi method itself is also iterative and in every cycle an improved set of eigenvectors is found. The accuracy of these eigenvectors and their associated eigenvalues can be assessed on the basis of the eigenproblem equation
+The two nested iterations have different purposes. During the inner Arnoldi or Lanczos solve, \(\rho_{\text{in}}\) and \(\mat{H}[\rho_{\text{in}}]\) remain fixed, and convergence is assessed using the eigenpair residuals in \cref{eq:ritz-residual}. Only after the requested eigenpairs have converged is \(\rho_{\text{out}}\) constructed and the outer SCF iteration advanced. Orbitals from the preceding SCF step can provide useful starting information because consecutive Hamiltonians are often similar.
+
+Simply replacing \(\rho_{\text{in}}\) by \(\rho_{\text{out}}\) may cause oscillation or ``overshooting.'' The simplest stabilization is linear density mixing,
 
 \begin{equation}
-    \mat{A} \vec{c}_{i} = \epsilon_{i} \vec{c}_{i}
+    \rho_{\text{in}}^{(n+1)} = \alpha\rho_{\text{out}}^{(n)}
+    +(1-\alpha)\rho_{\text{in}}^{(n)},
+    \qquad 0<\alpha\leq 1,
+    \label{eq:linear-mixing}
 \end{equation}
 
-and only when the set of $\{ \vec{c} \}$ is compliant to the above equation, the inner loop is converged.
-
-With respect to the outer iterative cycle, we can imagine a chain of electron densities $\rho_{i}$ that becomes with each iteration closer to the self-consistent field solution. To minimize upon the number of iterations required, it is advantageous to seek an optimal procedure to update $\rho$. It turns out that simply replacing the old $\rho$ with the updated one is not the most efficient as it can 1result in ``overshooting''. To combat the ``overshooting'', one can slowly add the new $\rho$ to the old $\rho$ via
-
-\begin{equation}
-    \rho \leftarrow \alpha \rho_{\text{new}} + (1 - \alpha) \rho_{\text{old}}
-\end{equation}
-
-where $\alpha$ acts as a linear mixing constant. This type of linear mixing is the most simple one and more advanced mixing schemes exist.
+where \(\alpha\) is the mixing parameter. A smaller value usually improves stability but may slow convergence. More advanced schemes use the history of previous density residuals to propose a better update.
 
 %
 %
 %
 \subsection{Solutions and visualization}
 
-The solution to \cref{eq:roothaan} are the set of Kohn-Sham states that minimizes the total electronic energy. These Kohn-Sham states are colloquially known as the molecular orbitals. The wave function associated to these Kohn-Sham states are encoded in the column space of the matrix $\mat{C}$ using the plane wave basis set. Visualization of these molecular orbitals is fairly straightforward via application of \cref{eq:fft_pw_inverse}, yet there are two important things to note.
+At self-consistency, the occupied solutions of \cref{eq:roothaan} are the Kohn--Sham states that minimize the energy functional subject to the requirement that the states remain orthonormal. For molecular systems, these states are commonly called molecular orbitals. Their plane-wave coefficients are stored in the columns of \(\mat{C}\). Visualization of these orbitals is fairly straightforward via application of \cref{eq:fft_pw_inverse}, yet there are two important things to note.
 
 Since $\psi(\vec{r}): \mathbb{R}^{3} \rightarrow \mathbb{C}$, typical construction of contour plots or isosurfaces requires evaluation of both real and imaginary parts of $\psi(\vec{r})$. Furthermore, especially for isosurfaces, a relatively fine grid is needed. The sampling grid generated by \cref{eq:fft_pw_inverse} depends on the size of the basis set. As the size is typically kept to a minimum for the sake of computational efficiency, the sampling grid is relatively coarse.
 
