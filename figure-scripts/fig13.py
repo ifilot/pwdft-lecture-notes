@@ -4,6 +4,11 @@ from pypwdft import PyPWDFT, SystemBuilder
 import pickle
 import os
 
+#
+# Figure 13
+# Molecular-orbital isosurfaces after reciprocal-space upsampling
+#
+
 def main():
     # create cubic periodic system with lattice size of 10 Bohr units
     npts = 64       # number of grid points

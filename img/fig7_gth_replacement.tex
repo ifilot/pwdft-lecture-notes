@@ -1,0 +1,59 @@
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+    font=\sffamily,
+    >=stealth,
+    electron/.style={circle, fill=cyan, draw=black, thick, minimum size=0.16cm, inner sep=0pt},
+    coreelectron/.style={circle, fill=cyan, draw=black, thick, minimum size=0.11cm, inner sep=0pt},
+    nucleus/.style={circle, fill=black, draw=black, thick, minimum size=0.55cm, inner sep=0pt, text=white},
+    ioniccore/.style={circle, fill=cyan!35, draw=black, thick, minimum size=1.55cm, align=center},
+    paneltitle/.style={font=\sffamily\bfseries},
+    smallnote/.style={font=\sffamily\scriptsize, align=center},
+    note/.style={font=\sffamily\small, align=center}
+]
+
+% panel titles
+\node[paneltitle] at (2.3,4.9) {All-electron atom};
+\node[paneltitle] at (8.0,4.9) {Pseudopotential atom};
+
+% replacement arrow
+\draw[->, thick] (4.45,3.15) -- (5.85,3.15);
+\node[note] at (5.15,3.55) {replace};
+
+% all-electron atom
+\node[nucleus] (nuc) at (2.3,3.05) {$+Z$};
+\draw[black, thick] (2.3,3.05) circle (0.72);
+\draw[black, thick] (2.3,3.05) circle (1.45);
+\foreach \a in {20,80,140,200,260,320} {
+    \node[coreelectron] at ($(nuc)+(\a:0.72)$) {};
+}
+\node[electron] at ($(nuc)+(28:1.45)$) {};
+\node[note] at (2.3,1.12) {nucleus and core electrons\\treated explicitly};
+\node[note] at (2.3,0.38) {$\nu_{\mathrm{ext}}(r)\sim -Z/r$};
+
+% pseudopotential atom
+\node[ioniccore] (core) at (8.0,3.05) {ionic\\core};
+\node[font=\sffamily\tiny, align=center] at (8.0,2.05) {$Z_{\mathrm{ion}}=Z-N_{\mathrm{core}}$};
+\draw[black, thick] (8.0,3.05) circle (1.45);
+\node[electron] at ($(core)+(28:1.45)$) {};
+\node[note] at (8.0,1.12) {only valence electrons\\treated explicitly};
+\node[note] at (8.0,0.38) {$\hat{V}_{\mathrm{GTH}}=\hat{V}_{\mathrm{loc}}+\hat{V}_{\mathrm{nl}}$};
+
+% schematic potentials
+\begin{scope}[shift={(0.9,-1.05)}]
+    \draw[->, thick] (0,0) -- (2.5,0) node[below] {$r$};
+    \draw[->, thick] (0,-1.45) -- (0,0.85);
+    \draw[black, thick, domain=0.17:2.25, samples=120]
+        plot ({\x},{-0.22/\x+0.38});
+    \node[note] at (1.25,-1.7) {singular bare\\attraction};
+\end{scope}
+
+\begin{scope}[shift={(6.6,-1.05)}]
+    \draw[->, thick] (0,0) -- (2.5,0) node[below] {$r$};
+    \draw[->, thick] (0,-1.45) -- (0,0.85);
+    \draw[cyan, very thick, domain=0.0:2.25, samples=120]
+        plot ({\x},{-0.22/sqrt(\x*\x+0.20)+0.38});
+    \node[note] at (1.25,-1.7) {smooth effective\\interaction};
+\end{scope}
+
+\end{tikzpicture}%
+}

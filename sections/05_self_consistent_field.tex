@@ -52,7 +52,9 @@ Another strong feature of the Arnoldi method is that the Hamiltonian matrix $\ma
 needs to be known. Using the plane wave basis set and the FFT to our advantage, this operation can be encapsulated as
 
 \begin{equation}
-    \hat{\mathcal{H}}\tilde{\psi}(\vec{G}) = \frac{1}{2} \hat{\mathcal{L}}\tilde{\psi}(\vec{G}) + \fftpw\left[\ifftpw\left[\tilde{\psi}(\vec{G}) \right] \circ \nu_{\text{eff}}(\vec{r}) \right]
+    \hat{\mathcal{H}}\tilde{\psi}(\vec{G}) = \frac{1}{2} \hat{\mathcal{L}}\tilde{\psi}(\vec{G})
+    + \fftpw\left[\ifftpw\left[\tilde{\psi}(\vec{G}) \right] \circ \nu_{\text{eff}}^{\text{loc}}(\vec{r}) \right]
+    + \hat{V}_{\text{nl}}\tilde{\psi}(\vec{G})
     \label{eq:appl_hamil}
 \end{equation}
 
@@ -63,13 +65,15 @@ where $\hat{\mathcal{L}}$ is the Laplacian operator, which when applied to the p
     \label{eq:laplacian_applied}
 \end{equation}
 
-where $\circ$ corresponds to the the Hadamard\footnote{The Hadamard product is simply the element-wise multiplication of two array-like objects. In \cref{eq:appl_hamil,eq:laplacian_applied}, $\tilde{\psi}(\vec{G})$ is a three-dimensional array of plane-wave coefficients. A Hadamard multiplication on $\tilde{\psi}(\vec{G})$ requires an array-like object of matching dimensions producing another array-like object of the same dimensions.} product operator. $\nu_{\text{eff}}(\vec{r})$ is the effective potential, which is the sum of the external, Hartree and exchange-correlation potentials as given by
+where $\circ$ corresponds to the Hadamard\footnote{The Hadamard product is simply the element-wise multiplication of two array-like objects. In \cref{eq:appl_hamil,eq:laplacian_applied}, $\tilde{\psi}(\vec{G})$ is a three-dimensional array of plane-wave coefficients. A Hadamard multiplication on $\tilde{\psi}(\vec{G})$ requires an array-like object of matching dimensions producing another array-like object of the same dimensions.} product operator. With a GTH pseudopotential, $\nu_{\text{eff}}^{\text{loc}}(\vec{r})$ is the local part of the effective potential,
 
 \begin{equation}
-    \nu_{\text{eff}}(\vec{r}) = \nu_{\text{ext}}(\vec{r}) + \nu_{u}(\vec{r}) + \nu_{\text{xc}}(\vec{r}).
+    \nu_{\text{eff}}^{\text{loc}}(\vec{r}) = V_{\text{loc}}(\vec{r}) + \nu_{u}(\vec{r}) + \nu_{\text{xc}}(\vec{r}),
 \end{equation}
 
-\cref{eq:appl_hamil} may seem counterintuitive, as it involves first transforming the plane-wave representation of the wave function, $\psi(\vec{G})$, to its real-space form. The effective potential is then applied in real-space, and subsequently, the result is converted back to the plane-wave representation. The sole reason for this is that the exchange-correlation energy is determined in real-space and involves a multiplication in real-space. This implies that its evaluation in the plane wave basis would require a very expensive convolution. Despite that it looks more convoluted\footnote{No pun intended.}, the sequence of operations as conducted in \cref{eq:appl_hamil} is computationally more efficient.
+and $\hat{V}_{\text{nl}}$ is the non-local projector contribution. In an all-electron calculation without a pseudopotential, $V_{\text{loc}}$ would be replaced by the bare external potential $\nu_{\text{ext}}$ and $\hat{V}_{\text{nl}}$ would be absent.
+
+\cref{eq:appl_hamil} may seem counterintuitive, as it involves first transforming the plane-wave representation of the wave function, $\psi(\vec{G})$, to its real-space form. The local effective potential is then applied in real-space, and subsequently, the result is converted back to the plane-wave representation. The sole reason for this is that the exchange-correlation energy is determined in real-space and involves a multiplication in real-space. This implies that its evaluation in the plane wave basis would require a very expensive convolution. Despite that it looks more convoluted\footnote{No pun intended.}, the sequence of operations as conducted in \cref{eq:appl_hamil} is computationally more efficient.
 
 %
 %
@@ -114,7 +118,7 @@ The point of \cref{eq:roothaan_explicit} is to emphasize that an iterative proce
 \begin{Figure}
     \centering
     \resizebox{0.9 \textwidth}{!}{
-        \input{img/scf}
+        \input{img/fig10_scf}
     }
     \captionof{figure}{Self-consistent field procedure within plane-wave density functional theory.}
     \label{fig:scf}
@@ -175,7 +179,7 @@ To demonstrate the principle of ``phase-rotation'' for visualization purposes, c
 
 \begin{Figure}
     \centering
-    \includegraphics[width=\linewidth]{img/fig9.pdf}
+    \includegraphics[width=\linewidth]{img/fig11.pdf}
     \captionof{figure}{Heat maps of the third and fourth occupied molecular orbital, i.e. the $E$-double-degenerate set, of the \ce{BH3} molecule. Top row corresponds to the real domain, bottom row to the imaginary domain. Note that $\psi_{4}$ has a non-negligible imaginary component.}
     \label{fig:bh3_before}
 \end{Figure}
@@ -199,7 +203,7 @@ We now proceed to apply \cref{eq:optimize_real} to the two molecular orbitals wi
 
 \begin{Figure}
     \centering
-    \includegraphics[width=0.95\linewidth]{img/fig10.pdf}
+    \includegraphics[width=0.95\linewidth]{img/fig12.pdf}
     \captionof{figure}{Total electron density corresponding to the real part of the wave function as function of the phase angle.}
     \label{fig:bh3_after}
 \end{Figure}

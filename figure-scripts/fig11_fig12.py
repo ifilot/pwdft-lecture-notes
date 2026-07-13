@@ -2,6 +2,7 @@
 
 #
 # EXERCISE 8
+# Figures 11 and 12
 #
 
 from pypwdft import SystemBuilder, PyPWDFT, PeriodicSystem
@@ -30,7 +31,7 @@ def main():
         with open('bh3.pickle', 'wb') as f:
             pickle.dump(res, f)
        
-    produce_plot(res, sz, npts, 'fig9.pdf')
+    produce_plot(res, sz, npts, '../img/fig11.pdf')
     
     ### TRANSFORMATION
     
@@ -61,7 +62,7 @@ def main():
     plt.ylabel(r'$\int_{\Omega} \mathfrak{R}\left[\psi \cdot \exp(i \varphi)\right]^{2} d\vec{r}$')
     plt.grid(linestyle='--', color='black', alpha=0.5)
     plt.tight_layout()
-    plt.savefig('fig10.pdf')
+    plt.savefig('../img/fig12.pdf')
     
     print(31.1, -real_part_psi(np.radians(31.1), res['orbc_rs'][3]) * deltaV)
     
@@ -81,7 +82,7 @@ def main():
         print(calculate_kinetic_energy(np.fft.fftn(res['orbc_rs'][i]) * Ct, sz, npts).real)
     
     # reproduce plots after transformation
-    #produce_plot(res, sz, npts, 'fig10.pdf')
+    #produce_plot(res, sz, npts, '../img/fig12.pdf')
 
 def produce_plot(res, sz, npts, filename):
     """

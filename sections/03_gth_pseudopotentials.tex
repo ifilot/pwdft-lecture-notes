@@ -8,7 +8,25 @@
 
 In the preceding section, the nuclei were represented as positive point charges and the electrons experienced the corresponding Coulomb potential $-Z/r$. This is a useful starting point, but it is not an efficient description of a many-electron atom in a plane-wave basis. There are two related reasons for this. First, the Coulomb potential diverges at the position of a nucleus. Secondly, the wave functions of the tightly bound core electrons vary very rapidly close to that nucleus. Moreover, a valence orbital must remain orthogonal to all core orbitals with the same angular symmetry. It consequently develops additional radial nodes and rapid oscillations in the core region. Representing any of these sharp features requires plane waves with very large $|\vec{G}|$ and thus a very high kinetic-energy cutoff.
 
-From a chemical point of view, this effort is often unnecessary. Core electrons are strongly bound and usually change little during bond formation, whereas valence electrons determine most chemical properties. A pseudopotential therefore replaces the nucleus and its chemically inactive core electrons by an effective ionic core. Only the valence electrons are treated explicitly. Outside a suitably chosen core region, a pseudo-valence orbital is made to reproduce the corresponding all-electron valence orbital. Inside this region it is replaced by a smooth, nodeless function. The interaction responsible for producing this pseudo-orbital is the \textit{pseudopotential}.
+From a chemical point of view, this effort is often unnecessary. Core electrons are strongly bound and usually change little during bond formation, whereas valence electrons determine most chemical properties. A pseudopotential therefore replaces the nucleus and its chemically inactive core electrons by an effective ionic core, as shown schematically in \cref{fig:gth_replacement}.
+
+The effective ionic core should be understood as the net object seen by a valence electron. In the all-electron description, this valence electron is attracted by the nucleus and repelled by the core electrons. The core electrons therefore screen part of the nuclear charge, so that far from the atom the combined interaction corresponds to an attraction by the reduced charge $Z_{\text{ion}}=Z-N_{\text{core}}$. Close to the core, however, the pseudopotential also represents quantum-mechanical effects associated with the removed core states, such as orthogonality to core orbitals, angular-momentum-dependent scattering and the exchange-correlation treatment used in the atomic reference calculation. It is therefore better viewed as an effective valence-electron--ionic-core interaction than as a simple sum of nuclear attraction and classical electron--electron repulsion.
+
+\begin{Figure}
+    \centering
+    \input{img/fig7_gth_replacement}
+    \captionof{figure}{Conceptual replacement made by a pseudopotential. In the all-electron description, the valence electrons interact with the bare nucleus while the core electrons are treated explicitly. In the pseudopotential description, the nucleus and frozen core electrons are replaced by an effective ionic core that acts on the explicitly treated valence electrons.}
+    \label{fig:gth_replacement}
+\end{Figure}
+
+Only the valence electrons are treated explicitly after this replacement. Outside a suitably chosen core region, a pseudo-valence orbital is made to reproduce the corresponding all-electron valence orbital. Inside this region, it is replaced by a smooth, nodeless function, as illustrated in \cref{fig:gth_pseudo_orbital}. The interaction responsible for producing this pseudo-orbital is the \textit{pseudopotential}.
+
+\begin{Figure}
+    \centering
+    \includegraphics[width=\linewidth]{img/fig8_pseudo_orbital.pdf}
+    \captionof{figure}{Representative radial construction comparing an all-electron valence orbital and a pseudo-valence orbital. Outside the core region, the pseudo-orbital matches the all-electron valence orbital. Inside the core region, the all-electron curve contains a node and stronger variation, whereas the pseudo-orbital is replaced by a smooth nodeless function that is easier to represent with plane waves.}
+    \label{fig:gth_pseudo_orbital}
+\end{Figure}
 
 The Goedecker--Teter--Hutter (GTH) pseudopotential used in PyPWDFT is a norm-conserving, separable, dual-space Gaussian pseudopotential.\cite{1996:gth} These terms have a precise meaning.
 
@@ -41,7 +59,7 @@ rather than the sum of the atomic numbers.
 %
 \subsection{Local and non-local contributions}
 
-The GTH electron--ion operator is divided into a local and a non-local part,
+In the pseudopotential calculation, the bare external electron--nuclear potential $\nu_{\text{ext}}$ is replaced by the GTH electron--ion operator. This operator is divided into a local and a non-local part,
 
 \begin{equation}
     \hat{V}_{\text{GTH}}
@@ -49,9 +67,11 @@ The GTH electron--ion operator is divided into a local and a non-local part,
     \label{eq:gth-split}
 \end{equation}
 
-The local part is an ordinary function of position. At a given point in space it multiplies every orbital by the same number, irrespective of the character of that orbital. It represents the long-range attraction between a valence electron and an ionic core, together with a smooth correction close to that core.
+Thus, $\hat{V}_{\text{GTH}}$ is the pseudopotential counterpart of $\nu_{\text{ext}}$. The replacement is not merely a change of notation: the all-electron Coulomb attraction to a point nucleus is exchanged for an effective interaction between the explicitly treated valence electrons and the ionic core.
 
-The non-local part distinguishes between different angular characters. Close to a carbon atom, for example, a portion of an orbital resembling an $s$ orbital need not experience exactly the same effective interaction as a portion resembling a $p$ orbital. Because an arbitrary molecular or crystalline orbital does not possess one definite atomic angular momentum, the operator first measures how strongly the orbital overlaps atom-centred functions of a particular angular character. It subsequently weights these overlaps and adds the corresponding functions back to the orbital. These measuring functions are termed \textit{projectors}.
+In this context, \textit{local} does not merely mean localized near a nucleus. It means that the operator is an ordinary function of position: at a given point in space it multiplies the orbital value at that same point. The local part therefore acts in the same mathematical way as the bare external potential, although with a different functional form. It represents the long-range attraction between a valence electron and an ionic core, together with a smooth correction close to that core.
+
+The non-local part is different because its action at one point is not determined solely by the orbital value at that same point. Instead, it distinguishes between different angular characters. Close to a carbon atom, for example, a portion of an orbital resembling an $s$ orbital need not experience exactly the same effective interaction as a portion resembling a $p$ orbital. Because an arbitrary molecular or crystalline orbital does not possess one definite atomic angular momentum, the operator first measures how strongly the orbital overlaps atom-centred functions of a particular angular character. It subsequently weights these overlaps and adds the corresponding functions back to the orbital. These measuring functions are termed \textit{projectors}.
 
 This separation is particularly convenient in plane-wave density functional theory. The local part is applied on the real-space grid, where multiplication is inexpensive. The non-local part is applied directly to the reciprocal-space orbital coefficients, where its separable form is inexpensive.
 

@@ -10,6 +10,8 @@ Within the Born-Oppenheimer approximation, the movement of the nuclei and the el
 
 where $\vec{n}$ loops over all periodic images and the sum is evaluated for all particles except in the situation when $\vec{n} = \vec{0}$ and $i = j$. Due to the relatively slow decay of the $\frac{1}{r}$ term in \cref{eq:enucnuc}, this sum converges very slowly.\footnote{More technically, it is only conditionally convergent.}
 
+The charge $q_i$ in this expression is the ionic charge used by the chosen model. In an all-electron calculation this is the full nuclear charge $Z_i$, whereas in a pseudopotential calculation it is the effective ionic charge $Z_{\text{ion},i}=Z_i-N_{\text{core},i}$ associated with the selected pseudopotential.
+
 As seen earlier in the derivation of $\nu_{\text{ext}}$, the charge density due to the nuclei can be represented by a sum of Dirac delta peaks and we can calculate the potential $\nu$ due to this set of point charges via the Poisson equation. This would yield the following equation for the total electrostatic repulsion between the nuclei.
 
 \begin{equation}
@@ -22,7 +24,7 @@ Of course, this strategy does not circumvent the initial problem that the Coulom
 \begin{Figure}
     \centering
     \resizebox{0.9 \textwidth}{!}{
-        \input{img/fig7_ewald_schematic}
+        \input{img/fig9_ewald_schematic}
     }
     \captionof{figure}{A set of points charges (left) can be described as a set of screened charges (right top) minus a smoothly varying compensating charge distribution of opposite sign (right bottom).}
     \label{fig:ewald_schematic}
