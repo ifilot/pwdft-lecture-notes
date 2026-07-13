@@ -19,12 +19,12 @@ The effective ionic core should be understood as the net object seen by a valenc
     \label{fig:gth_replacement}
 \end{Figure}
 
-Only the valence electrons are treated explicitly after this replacement. Outside a suitably chosen core region, a pseudo-valence orbital is made to reproduce the corresponding all-electron valence orbital. Inside this region, it is replaced by a smooth, nodeless function, as illustrated in \cref{fig:gth_pseudo_orbital}. The interaction responsible for producing this pseudo-orbital is the \textit{pseudopotential}.
+Only the valence electrons are treated explicitly after this replacement. Away from the core, a pseudo-valence orbital closely reproduces the corresponding all-electron valence orbital. In the core region, it is replaced by a smooth, nodeless function, as illustrated in \cref{fig:gth_pseudo_orbital}. The interaction responsible for producing this pseudo-orbital is the \textit{pseudopotential}.
 
 \begin{Figure}
     \centering
     \includegraphics[width=\linewidth]{img/fig8_pseudo_orbital.pdf}
-    \captionof{figure}{Representative radial construction comparing an all-electron valence orbital and a pseudo-valence orbital. Outside the core region, the pseudo-orbital matches the all-electron valence orbital. Inside the core region, the all-electron curve contains a node and stronger variation, whereas the pseudo-orbital is replaced by a smooth nodeless function that is easier to represent with plane waves.}
+    \captionof{figure}{Signed radial distribution functions $r^{2}\psi_{ns}(r)$ from self-consistent, spherical atomic LDA calculations for Si. The inset magnifies the all-electron core region on the same linear amplitude scale. The occupied all-electron 1s, 2s and 3s functions have zero, one and two radial nodes, respectively. The latter nodes enforce orthogonality of 3s to the two lower s states. A four-valence-electron calculation with the GTH-PADE-q4 potential instead gives a smooth, nodeless pseudo-3s function that closely follows the all-electron 3s function away from the core. Every curve uses the same scale factor.}
     \label{fig:gth_pseudo_orbital}
 \end{Figure}
 
