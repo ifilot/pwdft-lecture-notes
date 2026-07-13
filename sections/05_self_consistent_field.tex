@@ -27,14 +27,14 @@ For clarity, we consider a spin-unpolarized, closed-shell system at zero electro
 
 The density and the ground-state total energy in \cref{eq:gth-total-energy} therefore require only the \(N_{\text{elec}}/2\) occupied orbitals, rather than all \(N_{\text{pw}}\) eigenvectors of the Hamiltonian. In practice, a calculation may request some additional states: metals and finite-temperature calculations can have partially occupied bands, while response properties, excited-state methods and band-gap calculations also require unoccupied states. Here we restrict attention to the occupied states needed for a zero-temperature ground-state calculation.
 
-Iterative eigensolvers exploit this difference in size and calculate only a selected part of the spectrum. The plane-wave Hamiltonian is Hermitian and highly structured, but it is not generally sparse when represented as a matrix in reciprocal space: the kinetic term is diagonal, a local potential produces a convolution, and the non-local pseudopotential adds projector terms. The useful property is that the action \(\vec{c}\mapsto\mat{H}\vec{c}\) can be evaluated efficiently without ever constructing the full matrix. Such an implementation is called \textbf{matrix-free}. Arnoldi, Lanczos and Davidson methods are examples of iterative eigensolvers that can use this matrix-free operation.\cite{1951:arnoldi,1975:davidson} We next discuss Arnoldi because its construction illustrates the central idea and because an implicitly restarted implementation is available through SciPy's ARPACK interface.\cite{arnoldi_scipy}
+Iterative eigensolvers exploit this difference in size and calculate only a selected part of the spectrum. The plane-wave Hamiltonian is Hermitian and highly structured, but it is not generally sparse when represented as a matrix in reciprocal space: the kinetic term is diagonal, a local potential produces a convolution, and the non-local pseudopotential adds projector terms. The useful property is that the action \(\vec{c}\mapsto\mat{H}\vec{c}\) can be evaluated efficiently without ever constructing the full matrix. Such an implementation is called \textbf{matrix-free}. Arnoldi, Lanczos and Davidson methods are examples of iterative eigensolvers that can use this matrix-free operation.\cite{1951:arnoldi,1975:davidson} Here we discuss the \textbf{implicitly restarted Arnoldi method}, a widely used procedure available through SciPy's interface to ARPACK.\cite{arnoldi_scipy} We first explain the underlying Arnoldi construction and then return to what ``implicitly restarted'' means in practice.
 
 %
 %
 %
-\subsection{Arnoldi method}
+\subsection{Implicitly restarted Arnoldi method}
 
-The central idea of Arnoldi is to replace one very large eigenvalue problem by a much smaller one. The method constructs an adaptive basis of trial orbitals and represents the Hamiltonian in that trial space. Diagonalizing the resulting small matrix determines how the trial orbitals should be mixed to approximate the desired Kohn--Sham orbitals.
+The central idea of Arnoldi is to replace one very large eigenvalue problem by a much smaller one. The method constructs an adaptive basis of trial orbitals and represents the Hamiltonian in that trial space. Diagonalizing the resulting small matrix determines how the trial orbitals should be mixed to approximate the desired Kohn--Sham orbitals. The construction below describes the mathematical core of an implicitly restarted solver.
 
 During one Arnoldi solve, the electron density and hence the Hamiltonian are held fixed. Starting from a normalized vector \(\vec{q}_{1}\), the method explores the \(m\)-dimensional \textbf{Krylov subspace}
 
@@ -107,9 +107,9 @@ Thus, \(\vec{y}_{i}\) gives the coefficients with which the trial orbitals must 
 
 An eigenpair is accepted when its residual norm is smaller than a chosen tolerance. Monitoring the residual is more reliable than checking only whether the orbital energy has stopped changing. For degenerate states, individual orbitals are not unique because any orthonormal mixture within the degenerate space is equally valid; in that case it is the subspace spanned by those orbitals that should converge.
 
-The requested number of eigenpairs cannot be increased without cost. More states generally require a larger Krylov space, more stored vectors and more orthogonalization work. Because allowing the space to grow indefinitely would eventually become expensive, practical implementations periodically \textbf{restart}: they retain the most useful Ritz information and build a new, compact Krylov space. SciPy's \texttt{eigs} routine uses the implicitly restarted Arnoldi method.\cite{arnoldi_scipy}
+The requested number of eigenpairs cannot be increased without cost. More states generally require a larger Krylov space, more stored vectors and more orthogonalization work. Because allowing the space to grow indefinitely would eventually become expensive, practical implementations periodically \textbf{restart}: they retain the most useful Ritz information and build a new, compact Krylov space. In an \textbf{implicitly restarted Arnoldi method}, carefully chosen implicit QR shifts compress unwanted spectral information while retaining the Ritz directions associated with the desired eigenvalues. A new Arnoldi factorization can then continue from this compact subspace instead of starting again from an unrelated vector. SciPy's \texttt{eigs} routine obtains this algorithm from the ARPACK library.\cite{arnoldi_scipy}
 
-The Kohn--Sham Hamiltonian is Hermitian. For a Hermitian matrix, Arnoldi reduces in exact arithmetic to the closely related \textbf{Lanczos method}, and \(\mat{H}_{m}\) becomes tridiagonal. SciPy's \texttt{eigsh} routine uses an implicitly restarted Lanczos method for a real-symmetric problem; for a complex-Hermitian input, SciPy currently delegates to \texttt{eigs}.\cite{lanczos_scipy} The general Arnoldi construction is presented here because it also applies when the implementation treats the Hamiltonian as a general complex operator.
+The Kohn--Sham Hamiltonian is Hermitian. For a Hermitian matrix, Arnoldi reduces in exact arithmetic to the closely related \textbf{Lanczos method}, and \(\mat{H}_{m}\) becomes tridiagonal. This relationship explains why Arnoldi and Lanczos terminology may both be encountered for electronic-structure eigensolvers. In SciPy, \texttt{eigs} uses ARPACK's implicitly restarted Arnoldi method, while \texttt{eigsh} uses the corresponding Lanczos procedure for a real-symmetric problem. SciPy has no separate complex-Hermitian implementation of \texttt{eigsh}; for a complex-Hermitian operator it delegates to \texttt{eigs} and returns the real parts of the computed eigenvalues.\cite{arnoldi_scipy,lanczos_scipy} Consequently, calling SciPy's \texttt{eigsh} with a complex-valued plane-wave Hamiltonian uses \emph{implicitly restarted Arnoldi through SciPy/ARPACK}, despite the name of the public function.
 
 Finally, ``lowest'' must not be confused with ``smallest in magnitude.'' In a chemical calculation the occupied states have the smallest \emph{algebraic} eigenvalues, meaning the energies at the lower end of the spectrum, whereas an eigenvalue of smallest magnitude is merely closest to zero. In SciPy this distinction corresponds, for a Hermitian problem, to \texttt{which='SA'} versus \texttt{which='SM'}. Arnoldi-type methods often converge more readily to large-magnitude eigenvalues; transformations such as shift-invert can improve access to other parts of the spectrum but require the solution of linear systems.\cite{lanczos_scipy}
 
@@ -142,7 +142,32 @@ and the occupied columns determine the new real-space density,
     \label{eq:edens}
 \end{equation}
 
-Equations \eqref{eq:roothaan_explicit} and \eqref{eq:edens} form a feedback loop: the input density determines the Hamiltonian, and solving that Hamiltonian produces an output density. A self-consistent solution satisfies \(\rho_{\text{out}}=\rho_{\text{in}}\). The SCF procedure therefore starts from an initial density, constructs \(\mat{H}[\rho_{\text{in}}]\), solves its fixed-Hamiltonian eigenproblem, constructs \(\rho_{\text{out}}\), and repeats until the density residual and total energy in \cref{eq:gth-total-energy} are sufficiently converged. A schematic overview is shown in \cref{fig:scf}.
+Equations \eqref{eq:roothaan_explicit} and \eqref{eq:edens} form a feedback loop. It is useful to regard one complete Kohn--Sham solution as a mapping \(\mathcal{F}\) from an input density to an output density,
+
+\begin{equation}
+    \rho_{\text{out}}^{(n)}=\mathcal{F}\left[\rho_{\text{in}}^{(n)}\right].
+    \label{eq:scf-map}
+\end{equation}
+
+The superscript \(n\) labels the outer SCF iteration. A self-consistent density is a \textbf{fixed point} of this mapping: putting that density into the Kohn--Sham calculation returns the same density. We therefore define the density residual
+
+\begin{equation}
+    R^{(n)}(\vec{r})=ho_{\text{out}}^{(n)}(\vec{r})
+    -\rho_{\text{in}}^{(n)}(\vec{r}).
+    \label{eq:density-residual}
+\end{equation}
+
+The residual answers a simple question at every grid point: ``By how much does the current Kohn--Sham solution want to change the density?'' At self-consistency it vanishes everywhere. On a grid containing \(N_{\text{grid}}\) points, its overall size can be summarized by the root-mean-square value
+
+\begin{equation}
+    R_{\text{RMS}}^{(n)}=
+    \sqrt{\frac{1}{N_{\text{grid}}}
+    \sum_{k=1}^{N_{\text{grid}}}
+    \left[R^{(n)}(\vec{r}_{k})\right]^{2}}.
+    \label{eq:density-residual-rms}
+\end{equation}
+
+The SCF procedure starts from an initial density, constructs \(\mat{H}[\rho_{\text{in}}]\), solves its fixed-Hamiltonian eigenproblem, constructs \(\rho_{\text{out}}\), and repeats until both the density residual and the total energy in \cref{eq:gth-total-energy} are sufficiently converged. A schematic overview is shown in \cref{fig:scf}.
 
 \begin{Figure}
     \centering
@@ -155,16 +180,106 @@ Equations \eqref{eq:roothaan_explicit} and \eqref{eq:edens} form a feedback loop
 
 The two nested iterations have different purposes. During the inner Arnoldi or Lanczos solve, \(\rho_{\text{in}}\) and \(\mat{H}[\rho_{\text{in}}]\) remain fixed, and convergence is assessed using the eigenpair residuals in \cref{eq:ritz-residual}. Only after the requested eigenpairs have converged is \(\rho_{\text{out}}\) constructed and the outer SCF iteration advanced. Orbitals from the preceding SCF step can provide useful starting information because consecutive Hamiltonians are often similar.
 
-Simply replacing \(\rho_{\text{in}}\) by \(\rho_{\text{out}}\) may cause oscillation or ``overshooting.'' The simplest stabilization is linear density mixing,
+\subsubsection{Linear mixing}
+
+The most obvious update would be \(\rho_{\text{in}}^{(n+1)}=\rho_{\text{out}}^{(n)}\). This corresponds to applying the full requested change at once. Unfortunately, the density affects the potential, the potential affects the orbitals, and the orbitals in turn affect the next density. This feedback can be too strong: one iteration moves too far in one direction, the next compensates by moving too far in the opposite direction, and the calculation oscillates.
+
+The simplest stabilization is \textbf{linear mixing}. Only a fraction \(\beta\) of the residual is accepted,
 
 \begin{equation}
-    \rho_{\text{in}}^{(n+1)} = \alpha\rho_{\text{out}}^{(n)}
-    +(1-\alpha)\rho_{\text{in}}^{(n)},
-    \qquad 0<\alpha\leq 1,
+    \bar{\rho}^{(n)}
+    =\rho_{\text{in}}^{(n)}+\beta R^{(n)}
+    =(1-\beta)\rho_{\text{in}}^{(n)}
+    +\beta\rho_{\text{out}}^{(n)},
+    \qquad 0<\beta\leq 1.
     \label{eq:linear-mixing}
 \end{equation}
 
-where \(\alpha\) is the mixing parameter. A smaller value usually improves stability but may slow convergence. More advanced schemes use the history of previous density residuals to propose a better update.
+For plain linear mixing, \(\rho_{\text{in}}^{(n+1)}=\bar{\rho}^{(n)}\). The mixing fraction \(\beta\) acts rather like the size of a cautious step. With \(\beta=1\), the output density is accepted completely. A smaller value damps oscillations but also means that more steps may be required. A value of \(\beta=0.5\) is used as a reasonable default in the recipe described here.
+
+\subsubsection{Pulay mixing}
+
+Linear mixing uses only the current residual and forgets everything learned in earlier iterations. Pulay mixing, also known as \textbf{direct inversion in the iterative subspace} (DIIS), uses a short history to predict a better density.\cite{1980:pulay} Its basic intuition is cancellation: if two previous updates made errors in different directions, an appropriate combination may have a much smaller error than either update separately.
+
+Although a density is a three-dimensional scalar field, on a numerical grid it can be regarded simply as a long vector containing one density value per grid point. Suppose the most recent \(p\) iterations provide residual vectors \(R_i\) and their corresponding damped densities \(\bar{\rho}_i\). The history is kept short---at most six pairs in the present recipe---so that old information does not dominate and the additional calculation remains small.
+
+Pulay mixing seeks coefficients \(c_i\) for which the combined residual is as small as possible,
+
+\begin{equation}
+    \min_{\{c_i\}}
+    \left\|\sum_{i=1}^{p}c_iR_i\right\|^{2},
+    \qquad
+    \sum_{i=1}^{p}c_i=1.
+    \label{eq:pulay-minimization}
+\end{equation}
+
+The sum constraint ensures that the combination remains an affine combination of densities rather than being pulled artificially towards the zero-density field. Some coefficients may be negative: Pulay mixing is an extrapolation method, not merely a weighted average. This ability to extrapolate is what can make it much faster than linear mixing, but it also explains why safeguards are required.
+
+To determine the coefficients, define the residual-overlap matrix
+
+\begin{equation}
+    B_{ij}=\langle R_i,R_j\rangle
+    =\frac{1}{N_{\text{grid}}}
+    \sum_{k=1}^{N_{\text{grid}}}R_i(\vec{r}_k)R_j(\vec{r}_k).
+    \label{eq:pulay-overlap}
+\end{equation}
+
+The diagonal element \(B_{ii}\) is the mean-square size of residual \(i\), while an off-diagonal element measures whether two residual patterns point in similar directions. Minimizing \cref{eq:pulay-minimization} with a Lagrange multiplier \(\lambda\) gives the small linear system
+
+\begin{equation}
+    \begin{pmatrix}
+        \mat{B} & \vec{1} \\
+        \vec{1}^{T} & 0
+    \end{pmatrix}
+    \begin{pmatrix}
+        \vec{c} \\
+        \lambda
+    \end{pmatrix}
+    =
+    \begin{pmatrix}
+        \vec{0} \\
+        1
+    \end{pmatrix}.
+    \label{eq:pulay-system}
+\end{equation}
+
+This matrix has dimension only \((p+1)\times(p+1)\), irrespective of the much larger number of real-space grid points. Once the coefficients have been found, the next input density is constructed from the stored \emph{damped} densities,
+
+\begin{equation}
+    \rho_{\text{in}}^{(n+1)}
+    =\sum_{i=1}^{p}c_i\bar{\rho}_i.
+    \label{eq:pulay-update}
+\end{equation}
+
+Near self-consistency, the SCF mapping is approximately linear over small changes in the density. Under this local approximation, a combination whose predicted residual is small should lie closer to the fixed point. Pulay mixing therefore learns from how the full density field responded during several preceding iterations, without requiring an explicit derivative of the Kohn--Sham potential.
+
+\subsubsection{Safeguards and charge conservation}
+
+Pulay extrapolation cannot be trusted blindly. During the first iteration only one residual is available, so a linear step must be used. Nearly identical residuals can also make \(\mat{B}\) almost singular and lead to very large coefficients that cancel one another. A robust procedure scales the overlap matrix, adds a very small positive number to its diagonal, and falls back to the damped linear step whenever the Pulay system cannot be solved reliably.
+
+The candidate density is also rejected if it contains non-finite or negative values, if its coefficients are excessively large, or if it moves much farther than the corresponding linear step. In the present recipe, an individual coefficient larger than 20 in magnitude or a density step more than ten times the linear step triggers the fallback. These thresholds are practical safety limits rather than fundamental parts of Pulay theory. Negative densities must be avoided in particular because common density functionals contain fractional powers of \(\rho\).
+
+Finally, density mixing should not change the number of electrons. On an equally spaced grid the required mean density is \(N_{\text{elec}}/\Omega\). Small numerical drift is removed after either a linear or Pulay update by rescaling
+
+\begin{equation}
+    \rho(\vec{r}_k)\leftarrow
+    \rho(\vec{r}_k)
+    \frac{N_{\text{elec}}/\Omega}
+    {\frac{1}{N_{\text{grid}}}\sum_j\rho(\vec{r}_j)}.
+    \label{eq:density-normalization}
+\end{equation}
+
+The complete procedure can therefore be summarized as follows:
+
+\begin{enumerate}
+    \item construct \(\rho_{\text{out}}^{(n)}\) and the residual \(R^{(n)}\);
+    \item form the damped linear density \(\bar{\rho}^{(n)}\);
+    \item store this density and residual, discarding the oldest pair when the history is full;
+    \item use linear mixing when insufficient or unreliable history is available;
+    \item otherwise, solve the small Pulay system and combine the stored damped densities;
+    \item check that the proposed density is safe and restore the correct electron count;
+    \item use the result as \(\rho_{\text{in}}^{(n+1)}\) and begin the next SCF iteration.
+\end{enumerate}
 
 %
 %

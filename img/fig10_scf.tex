@@ -15,7 +15,7 @@
 \node (converged) [decision, below of=density, yshift=-1cm, align=center]
     {SCF\\converged?};
 \node (mix) [process, right of=converged, xshift=4cm, align=center]
-    {Mix $\rho_{\text{in}}$ and\\$\rho_{\text{out}}$};
+    {Linear or Pulay\\density mixing};
 \node (stop) [startstop, below of=converged, yshift=-1cm] {Done};
 
 \draw [arrow] (start) -- (hamiltonian);
