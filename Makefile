@@ -2,7 +2,8 @@ LATEXMK ?= latexmk
 LATEXMK_FLAGS ?= -pdf -interaction=nonstopmode -halt-on-error -file-line-error
 
 MAIN := main
-PDF := $(MAIN).pdf
+JOBNAME := pwdft-filot
+PDF := $(JOBNAME).pdf
 TEX_SOURCES := $(MAIN).tex \
 	$(wildcard config/*.tex) \
 	$(wildcard sections/*.tex) \
@@ -19,16 +20,16 @@ all: pdf
 pdf: $(PDF)
 
 $(PDF): $(TEX_SOURCES) $(FIGURES) $(BIB_SOURCES)
-	$(LATEXMK) $(LATEXMK_FLAGS) $(MAIN).tex
+	$(LATEXMK) $(LATEXMK_FLAGS) -jobname=$(JOBNAME) $(MAIN).tex
 
 watch:
-	$(LATEXMK) $(LATEXMK_FLAGS) -pvc $(MAIN).tex
+	$(LATEXMK) $(LATEXMK_FLAGS) -jobname=$(JOBNAME) -pvc $(MAIN).tex
 
 clean:
-	$(LATEXMK) -c $(MAIN).tex
+	$(LATEXMK) -c -jobname=$(JOBNAME) $(MAIN).tex
 
 distclean:
-	$(LATEXMK) -C $(MAIN).tex
+	$(LATEXMK) -C -jobname=$(JOBNAME) $(MAIN).tex
 
 help:
 	@echo "Available targets:"
