@@ -1,8 +1,10 @@
 \usepackage{mdframed}
+\usepackage{enumitem}
 
 \newmdenv[
   topline=false,
   bottomline=false,
+  nobreak=true,
   skipabove=\topsep,
   skipbelow=\topsep
 ]{siderules}
@@ -27,7 +29,7 @@
     \def\extype{#1}%
     \leavevmode\exstep\par
     \smallskip
-    #2
+    #2\par
     \begin{enumerate}[leftmargin=*,noitemsep,nosep]
 }{%
     \end{enumerate}

@@ -1,0 +1,340 @@
+%
+%
+%
+\section{Exercises}
+\label{chap:exercises}
+
+The following exercises are intended to consolidate the main ideas developed in
+these notes.  Exercises marked \textbf{Pen-and-paper} can be completed without
+specialized software.  Those marked \textbf{Simple script} require only basic
+array operations, linear algebra and Fourier transforms, for example as
+provided by NumPy.  When an exercise carries both labels, it is useful to make
+a prediction by hand before checking it numerically.
+
+%
+%
+%
+\subsection{Plane waves and reciprocal space}
+
+\begin{exci}{Reciprocal lattice of a non-cubic cell \hfill\textnormal{\small Pen-and-paper}}
+    \item Consider the unit-cell matrix
+    \begin{equation*}
+        \mat{M}=\begin{pmatrix}
+            4&0&0\\
+            1&3&0\\
+            0&1&5
+        \end{pmatrix}.
+    \end{equation*}
+    Calculate the unit-cell volume $\Omega$ and the reciprocal-lattice matrix
+    $\mat{B}$.
+    \item Verify explicitly that
+    $\vec{a}_{i}\cdot\vec{b}_{j}=2\pi\delta_{ij}$.
+\end{exci}
+
+\begin{exci}{Enumerating FFT modes \hfill\textnormal{\small Pen-and-paper}}
+    \item List the integer frequency indices for $N=5$, $N=6$ and $N=8$
+    before and after shifting the zero-frequency component to the centre.
+    \item Identify the Nyquist mode for each even grid and explain why the
+    positive and negative Nyquist frequencies constitute only one independent
+    mode on the sampling grid.
+\end{exci}
+
+\begin{exci}{Orthonormality in fractional coordinates \hfill\textnormal{\small Pen-and-paper}}
+    \item Write a point in an arbitrary parallelepiped unit cell as
+    $\vec{r}=s_{1}\vec{a}_{1}+s_{2}\vec{a}_{2}+s_{3}\vec{a}_{3}$, with
+    $0\leq s_i<1$.
+    \item Use these fractional coordinates, including the appropriate
+    Jacobian, to prove the plane-wave orthonormality relation
+    \begin{equation*}
+        \braket{\phi(\vec{G}\prime)|\phi(\vec{G})}
+        =\delta_{\vec{G},\vec{G}\prime}.
+    \end{equation*}
+\end{exci}
+
+\begin{exci}{Bloch phases \hfill\textnormal{\small Pen-and-paper}}
+    \item For a one-dimensional lattice with spacing $a$, calculate the phase
+    acquired under translations by $a$, $2a$ and $3a$ for
+    \begin{equation*}
+        k=0,\qquad k=\frac{\pi}{2a},\qquad k=\frac{\pi}{a}.
+    \end{equation*}
+    \item Show that $k$ and $k+2\pi/a$ impose the same boundary condition.
+\end{exci}
+
+\begin{exci}{Counting plane waves \hfill\textnormal{\small Pen-and-paper / Simple script}}
+    \item For a cubic unit cell, enumerate all reciprocal vectors satisfying
+    $G^{2}/2<E_{\textrm{cut}}$ for several cutoff energies.
+    \item Compare the number of vectors with the continuum estimate
+    \begin{equation*}
+        N_{\textrm{PW}}\approx
+        \frac{\Omega}{6\pi^{2}}(2E_{\textrm{cut}})^{3/2}.
+    \end{equation*}
+    \item Explain the small irregularities, or ``shell effects'', in the exact
+    counts.
+\end{exci}
+
+\begin{exci}{Aliasing by inspection \hfill\textnormal{\small Pen-and-paper / Simple script}}
+    \item Sample $f_m(x)=\exp(2\pi i m x/L)$ at $N$ equally spaced points in a
+    periodic interval of length $L$.
+    \item Show algebraically that modes $m$ and $m+N$ give identical samples.
+    \item Verify the result for several choices of $m$ and $N$ using a short
+    script.
+\end{exci}
+
+\begin{exci}{FFT normalization and Parseval's theorem \hfill\textnormal{\small Simple script}}
+    \item Sample the periodic function
+    \begin{equation*}
+        f(x)=1+2\cos(2\pi x/L)-\sin(4\pi x/L)
+    \end{equation*}
+    on an equidistant grid and transform it with \texttt{numpy.fft.fft} or an
+    equivalent FFT implementation.
+    \item Identify all non-zero Fourier coefficients and reconstruct $f(x)$.
+    \item Determine the normalization needed to convert the library output to
+    the plane-wave convention used in these notes.
+    \item Verify Parseval's identity numerically.
+\end{exci}
+
+\begin{exci}{Translation becomes phase \hfill\textnormal{\small Pen-and-paper / Simple script}}
+    \item Translate the function in the preceding exercise by a displacement
+    $d$ and predict the change in each Fourier coefficient.
+    \item Verify the prediction numerically and confirm that the magnitudes of
+    the coefficients remain unchanged.
+\end{exci}
+
+\begin{exci}{Why the density needs a finer grid \hfill\textnormal{\small Pen-and-paper / Simple script}}
+    \item Let
+    \begin{equation*}
+        \psi(x)=\cos(G_{\max}x)
+        +\frac{1}{2}\cos\big[(G_{\max}-\Delta G)x\big].
+    \end{equation*}
+    Expand $|\psi(x)|^{2}$ by hand and identify its largest frequency.
+    \item Evaluate the density numerically on the original orbital grid and
+    demonstrate the aliasing that occurs when the grid cannot represent this
+    largest frequency.
+\end{exci}
+
+%
+%
+%
+\subsection{Potentials and electrostatics}
+
+\begin{exci}{Poisson's equation for one Fourier mode \hfill\textnormal{\small Pen-and-paper}}
+    \item Given
+    $\rho(\vec{r})=\rho_{0}\cos(\vec{G}_{0}\cdot\vec{r})$, solve Poisson's
+    equation analytically for the electrostatic potential.
+    \item Verify the result by applying the Laplacian and explain why this
+    example has no problematic $\vec{G}=\vec{0}$ contribution.
+\end{exci}
+
+\begin{exci}{Meaning of the zero mode \hfill\textnormal{\small Pen-and-paper}}
+    \item Show that adding a constant to an electrostatic potential does not
+    change its electric field.
+    \item Explain the distinction between choosing the average potential to be
+    zero, removing the average charge density, and requiring a periodically
+    repeated unit cell to be neutral.
+\end{exci}
+
+\begin{exci}{Hartree energy in reciprocal space \hfill\textnormal{\small Pen-and-paper}}
+    \item Starting from
+    \begin{equation*}
+        E_{\textrm{H}}=\frac{1}{2}\int_{\Omega}
+        \rho(\vec{r})V_{\textrm{H}}(\vec{r})\,d\vec{r},
+    \end{equation*}
+    derive an expression for $E_{\textrm{H}}$ in terms of the reciprocal-space
+    density coefficients.
+    \item Use the result to show that the Hartree energy of a neutral,
+    real-valued density fluctuation is non-negative.
+\end{exci}
+
+\begin{exci}{Electrostatic cancellation \hfill\textnormal{\small Simple script}}
+    \item Place a normalized Gaussian electron density and an oppositely
+    charged ion in a cubic unit cell.
+    \item Calculate the electron--electron and electron--ion contributions
+    separately as the cell size changes, and plot their sum.
+    \item Explain why the separate contributions converge more poorly than the
+    neutral combination.
+\end{exci}
+
+\begin{exci}{Functional derivative of LDA exchange \hfill\textnormal{\small Pen-and-paper}}
+    \item Starting from
+    \begin{equation*}
+        E_{x}[\rho]=-C_{x}\int \rho^{4/3}(\vec{r})\,d\vec{r},
+    \end{equation*}
+    calculate $\delta E_x/\delta\rho(\vec{r})$.
+    \item Determine its sign and explain its physical meaning.
+    \item Compare your result carefully with the exchange-potential convention
+    used in the main text.
+\end{exci}
+
+%
+%
+%
+\subsection{GTH pseudopotentials}
+
+\begin{exci}{Limits of the local GTH potential \hfill\textnormal{\small Pen-and-paper}}
+    \item Use the small-argument expansion of the error function to calculate
+    $V_{\textrm{loc}}(0)$.
+    \item Determine the limit as $r\rightarrow\infty$ and identify which
+    polynomial--Gaussian terms survive at the origin.
+    \item Explain how these two limits express the intended purpose of the
+    pseudopotential.
+\end{exci}
+
+\begin{exci}{The finite $G=0$ contribution \hfill\textnormal{\small Pen-and-paper}}
+    \item Expand the reciprocal-space local GTH potential around $G=0$.
+    \item Separate its divergent Coulomb contribution from its finite
+    remainder and recover the finite constant stated in the text.
+\end{exci}
+
+\begin{exci}{A two-atom structure factor \hfill\textnormal{\small Pen-and-paper / Simple script}}
+    \item For identical atoms at $\pm\vec{R}/2$, simplify
+    \begin{equation*}
+        S(\vec{G})=
+        \exp(-i\vec{G}\cdot\vec{R}/2)
+        +\exp(+i\vec{G}\cdot\vec{R}/2).
+    \end{equation*}
+    \item Determine which reciprocal components vanish for selected atomic
+    separations.
+    \item Explain why the corresponding real-space potential is real and
+    verify this with a small numerical transform.
+\end{exci}
+
+\begin{exci}{Non-local projectors as a low-rank operator \hfill\textnormal{\small Pen-and-paper}}
+    \item Choose two projector vectors, collect them as the columns of $B$,
+    and choose a real symmetric $2\times2$ matrix $h$. Apply $BhB^{\dagger}$
+    to a trial vector.
+    \item Prove that $BhB^{\dagger}$ is Hermitian and has rank no greater than
+    two.
+    \item Express its expectation value without constructing the full
+    $N_{\textrm{PW}}\times N_{\textrm{PW}}$ matrix.
+\end{exci}
+
+\begin{exci}{Reading a pseudopotential file \hfill\textnormal{\small Pen-and-paper}}
+    \item For the carbon GTH parameter file shown in the text, identify
+    $Z_{\textrm{ion}}$, $r_{\textrm{loc}}$, all active $C_n$, the angular
+    channels, the number of projectors and every active $h^l$ matrix.
+    \item How many electrons and doubly occupied spatial orbitals would be
+    treated explicitly in a closed-shell calculation of \ce{CH4} using these
+    pseudopotentials?
+\end{exci}
+
+%
+%
+%
+\subsection{Ewald summation}
+
+\begin{exci}{Gaussian screening charge \hfill\textnormal{\small Pen-and-paper}}
+    \item Normalize the three-dimensional Gaussian screening charge used in
+    the Ewald construction.
+    \item Derive its Fourier transform and check its dimensions and its limits
+    as $G\rightarrow0$ and $G\rightarrow\infty$.
+\end{exci}
+
+\begin{exci}{Deriving the complementary-error-function split \hfill\textnormal{\small Pen-and-paper}}
+    \item Starting from the potential of a Gaussian charge, show that
+    \begin{equation*}
+        \frac{1}{r}=
+        \frac{\erfc(\sqrt{\alpha}r)}{r}
+        +\frac{\erf(\sqrt{\alpha}r)}{r}.
+    \end{equation*}
+    \item Explain which term is most efficiently evaluated in real space and
+    which in reciprocal space.
+\end{exci}
+
+\begin{exci}{Enumerating a primed Ewald sum \hfill\textnormal{\small Pen-and-paper}}
+    \item Consider two ions in the central cell and one neighboring cell on
+    either side in a one-dimensional sketch. Explicitly list the interactions
+    within the central cell, those with periodic images and the excluded
+    self-interactions.
+    \item Write the result as a compact primed summation and explain precisely
+    what the prime excludes.
+\end{exci}
+
+\begin{exci}{Independence of the splitting parameter \hfill\textnormal{\small Simple script}}
+    \item Implement the real-space, reciprocal-space, self-interaction and
+    background contributions for two opposite charges in a cubic cell.
+    \item Vary $\alpha$ while keeping both truncation ranges sufficiently
+    large. Plot the separate contributions and their sum.
+    \item Explain why the individual terms change while the total energy
+    remains approximately constant.
+\end{exci}
+
+\begin{exci}{Balancing real- and reciprocal-space cost \hfill\textnormal{\small Pen-and-paper / Simple script}}
+    \item Use the parameter-estimation formulas in the text to tabulate the
+    real-space and reciprocal-space ranges for several splitting parameters.
+    \item Estimate the number of terms in each sum and identify the
+    approximately cheapest choice.
+\end{exci}
+
+%
+%
+%
+\subsection{Eigensolvers and self-consistency}
+
+\begin{exci}{Two Arnoldi steps by hand \hfill\textnormal{\small Pen-and-paper}}
+    \item Choose a small Hermitian $3\times3$ matrix and a normalized starting
+    vector. Perform two Arnoldi iterations and construct $Q_2$ and $H_2$.
+    \item Calculate the Ritz pairs of $H_2$ and form the corresponding Ritz
+    vectors in the original space.
+    \item Evaluate one Ritz residual both directly and from the Arnoldi
+    residual formula.
+\end{exci}
+
+\begin{exci}{Planning a matrix-free Hamiltonian application \hfill\textnormal{\small Pen-and-paper}}
+    \item For each of the kinetic, local ionic, Hartree,
+    exchange--correlation and non-local projector contributions, state the
+    representation in which it is cheapest to apply.
+    \item Describe the operation that must be performed and identify every
+    point at which an FFT or inverse FFT is required.
+    \item Combine the operations into pseudocode for one Hamiltonian--vector
+    product.
+\end{exci}
+
+\begin{exci}{Stability of linear mixing \hfill\textnormal{\small Pen-and-paper}}
+    \item Replace the density by a scalar and let the SCF map be
+    $\rho_{\textrm{out}}=a\rho_{\textrm{in}}+b$. Derive its fixed point.
+    \item Show that linear mixing converges when
+    \begin{equation*}
+        \left|1+\beta(a-1)\right|<1.
+    \end{equation*}
+    \item Construct an example for which $\beta=1$ diverges but $\beta=0.2$
+    converges.
+\end{exci}
+
+\begin{exci}{Pulay coefficients for two residuals \hfill\textnormal{\small Pen-and-paper}}
+    \item Choose two short residual vectors, construct their overlap matrix
+    $B$, and solve the constrained Pulay system.
+    \item Compare the norm of the combined residual with the two original
+    norms.
+    \item Repeat the calculation for nearly parallel residuals and explain the
+    resulting ill-conditioning.
+\end{exci}
+
+\begin{exci}{Charge conservation during mixing \hfill\textnormal{\small Pen-and-paper / Simple script}}
+    \item Apply the density-rescaling formula to a small grid of trial density
+    values and verify the electron count after rescaling.
+    \item Construct an example showing why normalization alone cannot repair a
+    candidate density containing negative values.
+\end{exci}
+
+\begin{exci}{Phase rotation without an optimizer \hfill\textnormal{\small Pen-and-paper / Simple script}}
+    \item Write $\psi_k=x_k+iy_k$ and show that
+    \begin{align*}
+        \sum_k\left[\mathfrak{R}\left(e^{i\varphi}\psi_k\right)\right]^2
+        ={}&\frac{A+B}{2}+\frac{A-B}{2}\cos(2\varphi)\\
+        &-C\sin(2\varphi),
+    \end{align*}
+    where $A=\sum_kx_k^2$, $B=\sum_ky_k^2$ and $C=\sum_kx_ky_k$.
+    \item Obtain the optimal phase analytically and compare it with the result
+    of a direct numerical search.
+    \item Explain why a general nonlinear optimizer is unnecessary for this
+    one-parameter problem.
+\end{exci}
+
+\begin{exci}{Fourier zero-padding \hfill\textnormal{\small Simple script}}
+    \item Upsample a periodic function by padding its reciprocal-space
+    coefficients with zeros and applying an inverse FFT on the enlarged grid.
+    \item Verify that the original values are recovered at matching grid
+    points and determine the normalization required to conserve the norm.
+    \item Explain why zero-padding interpolates a band-limited function but
+    adds no new physical information.
+\end{exci}
